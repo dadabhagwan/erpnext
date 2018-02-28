@@ -471,7 +471,14 @@ def get_valuation_rate(item_code, warehouse, voucher_type, voucher_no,
 
 	if not allow_zero_rate and not valuation_rate \
 			and cint(erpnext.is_perpetual_inventory_enabled(company)):
-		frappe.local.message_log = []
-		frappe.throw(_("Valuation rate not found for the Item {0}, which is required to do accounting entries for {1} {2}. If the item is transacting as a zero valuation rate item in the {1}, please mention that in the {1} Item table. Otherwise, please create an incoming stock transaction for the item or mention valuation rate in the Item record, and then try submiting/cancelling this entry").format(item_code, voucher_type, voucher_no))
+		if is_client_paper(item_code):
+			valuation_rate = 0
+		else:
+			frappe.local.message_log = []
+			frappe.throw(_("Valuation rate not found for the Item {0}, which is required to do accounting entries for {1} {2}. If the item is transacting as a zero valuation rate item in the {1}, please mention that in the {1} Item table. Otherwise, please create an incoming stock transaction for the item or mention valuation rate in the Item record, and then try submiting/cancelling this entry").format(item_code, voucher_type, voucher_no))
 
 	return valuation_rate
+
+def is_client_paper(item=None):
+	return frappe.db.exists("Item Variant Attribute",
+		{"parent":item, "attribute" : "Owner", "attribute_value" : ["!=","Amba Offset"]}) and True or False

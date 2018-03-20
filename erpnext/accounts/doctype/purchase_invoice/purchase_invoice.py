@@ -135,7 +135,9 @@ class PurchaseInvoice(BuyingController):
 			},
 			"Purchase Order Item": {
 				"ref_dn_field": "po_detail",
-				"compare_fields": [["project", "="], ["item_code", "="], ["uom", "="]],
+				"compare_fields": [["project", "="], ["item_code", "="]],
+				# vijay changed to allow purchase invoice in uom different from purchase order 
+				# "compare_fields": [["project", "="], ["item_code", "="], ["uom", "="]],
 				"is_child_table": True,
 				"allow_duplicate_prev_row_id": True
 			},
@@ -145,7 +147,9 @@ class PurchaseInvoice(BuyingController):
 			},
 			"Purchase Receipt Item": {
 				"ref_dn_field": "pr_detail",
-				"compare_fields": [["project", "="], ["item_code", "="], ["uom", "="]],
+				"compare_fields": [["project", "="], ["item_code", "="]],
+				# vijay changed to allow purchase invoice in uom different from purchase receipt 
+				# "compare_fields": [["project", "="], ["item_code", "="], ["uom", "="]],
 				"is_child_table": True
 			}
 		})

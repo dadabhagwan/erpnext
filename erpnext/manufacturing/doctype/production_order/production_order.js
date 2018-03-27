@@ -378,8 +378,18 @@ erpnext.production_order = {
 		}
 
 		max = flt(max, precision("qty"));
-		frappe.prompt({fieldtype:"Float", label: __("Qty for {0}", [purpose]), fieldname:"qty",
+		frappe.prompt(
+			[
+			{fieldtype:"Float", label: __("Qty for {0}", [purpose]), fieldname:"qty",
 			description: __("Max: {0}", [max]), 'default': max },
+			{fieldtype : "Check", label :__("Allow Over Production"), fieldname : "allow_over_production",
+			description: __("Allow more than Production Order Qty")},
+			{fieldtype : "Data", label :__("Balance to Manufacture"), fieldname : "balance_qty", read_only :1,
+			description: __("Balance to Manufacture for Issued Qty"), value : 0},
+			{fieldtype : "Check", label :__("Balance as Loss"), fieldname : "loss_qty",
+			description: __("Finish and adjust balance qty as loss")},
+			]
+			,
 			function(data) {
 				if(data.qty > max) {
 					frappe.msgprint(__("Quantity must not be more than {0}", [max]));

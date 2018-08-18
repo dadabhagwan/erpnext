@@ -43,7 +43,7 @@ and not EXISTS
 @frappe.whitelist()
 def get_reservation_chart(from_date, to_date):
     records = frappe.db.sql("""
-select hotel_room.hotel_room_type, hotel_room.name hotel_room_name, cal.db_date date, lower(coalesce(allot.allotment_status,'available')) status 
+select hotel_room.hotel_room_type, hotel_room.name hotel_room_name, cal.db_date date, lower(coalesce(allot.allotment_status,'available')) info 
 from `tabHotel Room` hotel_room
 cross join `tabCalendar` cal
 left outer join `tabHotel Room Reservation Allotment` allot on allot.from_date <= cal.db_date and allot.to_date > cal.db_date and allot.allotment_status in ('Booked', 'CheckedIn')
@@ -52,9 +52,9 @@ order by hotel_room.hotel_room_type, hotel_room.name, cal.db_date
     """.format(from_date=from_date, to_date=to_date), as_list=True)
 
     df = pd.DataFrame.from_records(
-        records, columns=['hotel_room_type', 'hotel_room_name', 'date', 'reservation'])
+        records, columns=['hotel_room_type', 'hotel_room_name', 'date', 'info'])
     pivot = pd.pivot_table(df, index=['hotel_room_type', 'hotel_room_name'], columns=[
-        'date'], values='reservation', aggfunc=lambda x: ''.join(x), fill_value='', )
+        'date'], values='info', aggfunc=max, fill_value='', )
     data = pd.DataFrame(pivot.to_records()).to_dict('records')
 
     # print(data)

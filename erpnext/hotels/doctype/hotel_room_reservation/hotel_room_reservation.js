@@ -7,9 +7,19 @@ frappe.ui.form.on('Hotel Room Reservation', {
 	},
 	refresh: function (frm) {
 		if (true || frm.doc.docstatus == 1) {
-			frm.add_custom_button(__("Make Invoice"), () => {
+			// frm.add_custom_button(__("Make Proforma Invoice"), () => {
+			// 	frm.trigger("make_sales_order");
+			// });
+
+			frm.page.add_menu_item(__("Recalculate"), () => {
+				frm.trigger("recalculate_rates");
+			});
+
+			frm.page.add_menu_item(__("Make Invoice"), () => {
 				frm.trigger("make_invoice");
 			});
+
+
 		}
 	},
 	from_date: function (frm) {
@@ -45,6 +55,28 @@ frappe.ui.form.on('Hotel Room Reservation', {
 				() => frm.set_value("net_total", r.message.net_total),
 				() => frm.refresh_field("items")
 			]);
+		});
+	},
+	make_sales_order: function (frm) {
+		frappe.model.with_doc("Hotel Settings", "Hotel Settings", () => {
+			frappe.model.with_doctype("Sales Order", () => {
+				let hotel_settings = frappe.get_doc("Hotel Settings", "Hotel Settings");
+				let sales_order = frappe.model.get_new_doc("Sales Order");
+				sales_order.customer = frm.doc.customer || hotel_settings.default_customer;
+				if (hotel_settings.default_invoice_naming_series) {
+					sales_order.naming_series = hotel_settings.default_invoice_naming_series;
+				}
+				for (let d of frm.doc.items) {
+					let invoice_item = frappe.model.add_child(invoice, "items")
+					invoice_item.item_code = d.item;
+					invoice_item.qty = d.qty;
+					invoice_item.rate = d.rate;
+				}
+				if (hotel_settings.default_taxes_and_charges) {
+					invoice.taxes_and_charges = hotel_settings.default_taxes_and_charges;
+				}
+				frappe.set_route("Form", invoice.doctype, invoice.name);
+			});
 		});
 	},
 	make_invoice: function (frm) {

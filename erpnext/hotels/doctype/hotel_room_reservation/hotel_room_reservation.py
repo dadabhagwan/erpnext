@@ -30,8 +30,13 @@ class HotelRoomReservation(Document):
         self.set_rates()
         self.validate_availability()
         self.validate_allotment()
+
+    def after_insert(self):
+        self.guest_name = frappe.db.get_value(
+            "Guest", self.guest, "full_name")
         if not self.customer:
-            self.customer = frappe.db.get_single_value(
+            self.customer = frappe.db.get_value(
+                "Guest", self.guest, "customer") or frappe.db.get_single_value(
                 'Hotel Settings', 'default_customer')
 
     def validate_allotment(self):

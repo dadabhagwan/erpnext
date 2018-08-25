@@ -139,7 +139,7 @@ class HotelRoomReservation(Document):
                         item.rate
                     from
                         `tabHotel Room Pricing Item` item,
-                        `tabHotel Room Pricing` pricing
+                        `tabHotel Room: Pricing` pricing
                     where
                         item.parent = pricing.name
                         and item.item = %s

@@ -19,7 +19,9 @@ frappe.ui.form.on('Hotel Room Reservation', {
 				frm.trigger("make_invoice");
 			});
 
+			frm.fields_dict["items"].grid.add_custom_button(__('Check In'), () => {
 
+			});
 		}
 	},
 	from_date: function (frm) {

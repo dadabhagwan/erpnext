@@ -5,16 +5,40 @@ frappe.ui.form.on('Hotel Room Reservation', {
 
 	onload: function (frm) {
 		frm.trigger("setup_queries");
+		frm.trigger("add_custom_buttons");
 
+	},
+
+	add_custom_buttons: function (frm) {
 
 		frm.fields_dict["items"].grid.add_custom_button(__('Allot Rooms'), () => {
 			frm.trigger("allot_rooms_for_items");
 		});
 
 		//move button to end of panel
-		var allot_btn = cur_frm.fields_dict.items.grid.grid_buttons.children(0)[0]
-		$(allot_btn).appendTo(cur_frm.fields_dict.items.grid.grid_buttons)
+		var allot_btn = frm.fields_dict.items.grid.grid_buttons.children(0)[0]
+		$(allot_btn).appendTo(frm.fields_dict.items.grid.grid_buttons)
 
+
+		frm.fields_dict["room_allotment"].grid.add_custom_button(__('Check In'), () => {
+			frm.trigger("check_in_selected");
+		});
+
+		//move button to end of panel
+		var check_in_btn = frm.fields_dict.room_allotment.grid.grid_buttons.children(0)[0]
+		$(check_in_btn).appendTo(frm.fields_dict.room_allotment.grid.grid_buttons)
+
+	},
+
+	check_in_selected: function (frm) {
+		var _grid = frm.fields_dict["room_allotment"].grid;
+		for (let d of _grid.get_selected_children()) {
+			if (d.allotment_status == "Booked") {
+				if (d.from_date == frappe.datetime.get_today())
+					d.allotment_status = "CheckedIn";
+			}
+		}
+		frm.refresh_field("room_allotment");
 	},
 
 	make_sales_invoice: function (frm) {

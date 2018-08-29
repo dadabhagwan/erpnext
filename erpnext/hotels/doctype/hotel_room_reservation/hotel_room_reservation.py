@@ -45,9 +45,13 @@ class HotelRoomReservation(Document):
         for d in self.items:
             alloted_count = len([i for i in self.room_allotment if i.from_date ==
                                  d.from_date and i.to_date == d.to_date and i.item == d.item])
-            if not alloted_count == d.room_count:
-                frappe.throw("%d %s rooms to be alloted from %s to %s" %
-                             (d.room_count-alloted_count, d.item, d.from_date, d.to_date))
+            if alloted_count < d.room_count:
+                frappe.throw("%d more %s rooms to be alloted from %s to %s" % (d.room_count-alloted_count,
+                                                                               d.item, d.from_date, d.to_date))
+            elif alloted_count > d.room_count:
+                frappe.throw("Over allotted %d %s rooms between %s and %s" % (alloted_count-d.room_count,
+                                                                                  d.item, d.from_date, d.to_date))
+
         # check same room alloted more than once for same day
         for d in self.room_allotment:
             dup = [i for i in self.room_allotment if i.name <> d.name and i.room ==
@@ -101,11 +105,11 @@ class HotelRoomReservation(Document):
 
         for d in self.room_allotment:
             if frappe.db.exists("""
-            select 1 
-            from 
+            select 1
+            from
                 `tabHotel Room Reservation Allotment allotment
-            where 
-                allotment.parent <> {reservation} 
+            where
+                allotment.parent <> {reservation}
                 and allotment.room = {room}
                 and allotment.allotment_status in ('Booked','CheckedIn')
                 and not (allotment.from_date > '{to_date}' or allotment.to_date < '{from_date}'
@@ -139,7 +143,7 @@ class HotelRoomReservation(Document):
                         item.rate
                     from
                         `tabHotel Room Pricing Item` item,
-                        `tabHotel Room: Pricing` pricing
+                        `tabHotel Room Pricing` pricing
                     where
                         item.parent = pricing.name
                         and item.item = %s
@@ -194,15 +198,15 @@ def get_rooms_availability(from_date, to_date, exclude_reservation=None):
         exclude_condition = "and item.parent != '{0}'".format(
             frappe.db.escape(exclude_reservation))
 
-    return frappe.db.sql("""		
+    return frappe.db.sql("""
 select cal.db_date date, room.hotel_room_type, room.room_count - coalesce(sum(booked),0) available
 FROM
 `tabCalendar` cal
 cross join (select hotel_room_type, count(*) room_count from `tabHotel Room`) room
-left outer join 
+left outer join
 (
 	select cal.db_date date, room.hotel_room_type, count(*) booked
-	from `tabHotel Room Reservation Allotment` item 
+	from `tabHotel Room Reservation Allotment` item
 	inner join `tabHotel Room` room on room.name = item.room
 	inner join `tabCalendar` cal on cal.db_date>= item.from_date and cal.db_date<=item.to_date
 	where cal.db_date between '{from_date}' and '{to_date}'
@@ -211,7 +215,7 @@ left outer join
 	group by cal.db_date
 	union all
 	select cal.db_date date, room_package.hotel_room_type, sum(item.room_count) booked
-	from `tabHotel Room Reservation Item` item 
+	from `tabHotel Room Reservation Item` item
 	inner join `tabHotel Room Package` room_package on room_package.item = item.item
 	inner join `tabCalendar` cal on cal.db_date>= item.from_date and cal.db_date<=item.to_date
 	where cal.db_date between '{from_date}' and '{to_date}'
@@ -221,3 +225,38 @@ left outer join
 ) booked on booked.hotel_room_type = room.hotel_room_type and cal.db_date = booked.date
 where cal.db_date between '{from_date}' and '{to_date}'
 group by cal.db_date, room.hotel_room_type""".format(exclude_condition=exclude_condition, from_date=from_date, to_date=to_date), as_dict=True)
+
+
+@frappe.whitelist()
+def make_sales_invoice(source_name, target_doc=None, ignore_permissions=False):
+    # Should use get_mapped_doc ?
+    from erpnext import get_default_company
+
+    reservation = frappe.get_doc("Hotel Room Reservation", source_name)
+    si_doc = frappe.new_doc("Sales Invoice")
+    company = get_default_company()
+    hotel_settings = frappe.get_single("Hotel Settings")
+    if not hotel_settings.default_customer:
+        frappe.throw("Default customer is not set in Hotel Settings")
+
+    si_doc.company = company
+    si_doc.customer = reservation.customer or hotel_settings.default_customer
+    si_doc.naming_series = hotel_settings.default_invoice_naming_series
+    if hotel_settings.default_taxes_and_charges:
+        si_doc.taxes_and_charges = hotel_settings.default_taxes_and_charges
+        si_doc.set_taxes()
+
+    for d in reservation.items:
+        si_doc.append("items", {
+            "item_code": d.item,
+            "qty": d.qty,
+            "rate": d.rate
+        })
+
+    si_doc.flags.ignore_permissions = 1
+    si_doc.set_missing_values()
+    si_doc.calculate_taxes_and_totals()
+    si_doc.insert()
+    frappe.db.commit()
+
+    return si_doc

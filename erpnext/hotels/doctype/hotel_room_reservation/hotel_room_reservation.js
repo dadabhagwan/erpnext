@@ -11,22 +11,26 @@ frappe.ui.form.on('Hotel Room Reservation', {
 
 	add_custom_buttons: function (frm) {
 
+		var move_to_end = function (grid, btn) {
+			// move first button in grid buttons to last. So Delete, Add Row stay in place and new buttons appear at the end
+			$(frm.fields_dict[grid].grid.custom_buttons[btn][0]).appendTo(frm.fields_dict[grid].grid.grid_buttons);
+		}
+
 		frm.fields_dict["items"].grid.add_custom_button(__('Allot Rooms'), () => {
 			frm.trigger("allot_rooms_for_items");
 		});
-
-		//move button to end of panel
-		var allot_btn = frm.fields_dict.items.grid.grid_buttons.children(0)[0]
-		$(allot_btn).appendTo(frm.fields_dict.items.grid.grid_buttons)
-
+		move_to_end("items", "Allot Rooms")
 
 		frm.fields_dict["room_allotment"].grid.add_custom_button(__('Check In'), () => {
 			frm.trigger("check_in_selected");
 		});
+		move_to_end("room_allotment", "Check In")
 
-		//move button to end of panel
-		var check_in_btn = frm.fields_dict.room_allotment.grid.grid_buttons.children(0)[0]
-		$(check_in_btn).appendTo(frm.fields_dict.room_allotment.grid.grid_buttons)
+		frm.fields_dict["room_allotment"].grid.add_custom_button(__('Check Out'), () => {
+			frm.trigger("check_out_selected");
+		});
+		move_to_end("room_allotment", "Check Out")
+
 
 	},
 
@@ -35,7 +39,18 @@ frappe.ui.form.on('Hotel Room Reservation', {
 		for (let d of _grid.get_selected_children()) {
 			if (d.allotment_status == "Booked") {
 				if (d.from_date == frappe.datetime.get_today())
-					d.allotment_status = "CheckedIn";
+					d.allotment_status = "Checked In";
+			}
+		}
+		frm.refresh_field("room_allotment");
+	},
+
+	check_out_selected: function (frm) {
+		var _grid = frm.fields_dict["room_allotment"].grid;
+		for (let d of _grid.get_selected_children()) {
+			if (d.allotment_status == "Checked In") {
+				if (d.to_date == frappe.datetime.get_today())
+					d.allotment_status = "Checked Out";
 			}
 		}
 		frm.refresh_field("room_allotment");

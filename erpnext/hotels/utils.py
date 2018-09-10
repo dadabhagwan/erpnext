@@ -12,7 +12,7 @@ import pandas as pd
 
 
 def test():
-    return get_reservation_chart("2018-08-16", "2018-08-26")
+    return get_reservation_chart("2018-08-28", "2018-08-31")
 
 
 def get_available_rooms(doctype, txt, searchfield, start, page_len, filters):
@@ -43,10 +43,11 @@ and not EXISTS
 @frappe.whitelist()
 def get_reservation_chart(from_date, to_date):
     records = frappe.db.sql("""
-select hotel_room.hotel_room_type, hotel_room.name hotel_room_name, cal.db_date date, lower(coalesce(allot.allotment_status,'available')) info 
+select hotel_room.hotel_room_type, hotel_room.name hotel_room_name, cal.db_date date, 
+replace(lower(coalesce(allot.allotment_status,'Checked In')),'','checkedin') info 
 from `tabHotel Room` hotel_room
 cross join `tabCalendar` cal
-left outer join `tabHotel Room Reservation Allotment` allot on allot.from_date <= cal.db_date and allot.to_date > cal.db_date and allot.allotment_status in ('Booked', 'CheckedIn')
+left outer join `tabHotel Room Reservation Allotment` allot on allot.from_date <= cal.db_date and allot.to_date > cal.db_date and allot.allotment_status in ('Booked', 'Checked In')
 where cal.db_date between '{from_date}' and '{to_date}'
 order by hotel_room.hotel_room_type, hotel_room.name, cal.db_date
     """.format(from_date=from_date, to_date=to_date), as_list=True)

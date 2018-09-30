@@ -20,9 +20,6 @@ def get_available_rooms(doctype, txt, searchfield, start, page_len, filters):
         filters = {}
     where_conditions = ''
 
-    where_conditions += "and allot.parent <> '%s' " % filters.get(
-        "reservation", "")
-
     return frappe.db.sql("""
 select hotel_room.name 
 from `tabHotel Room` hotel_room
@@ -31,11 +28,12 @@ where
 hotel_room_package.item = '{item}'
 and not EXISTS
 (
- select 1
- from `tabHotel Room Reservation Allotment` allot
- where allot.room = hotel_room.name
- and not (allot.from_date > '{to_date}' or allot.to_date < '{from_date}')
- and allot.allotment_status in ('Booked', 'CheckedIn') 
+ select 1 
+ from `tabHotel Room Reservation` r 
+ where
+ r.room = hotel_room.name
+ and r.room_status in ('Checked In','Booked')
+ and not (r.from_date > '{to_date}' or r.to_date < '{from_date}')
  {where_conditions}
 )""".format(item=filters.get("item"), from_date=filters.get("from_date"), to_date=filters.get("to_date"), where_conditions=where_conditions))
 

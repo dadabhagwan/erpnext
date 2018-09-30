@@ -70,15 +70,15 @@ class HotelRoomReservation(Document):
             for i in xrange(date_diff(self.to_date, self.from_date)):
                 day = add_days(self.from_date, i)
                 day_rate = frappe.db.sql("""
-                    select 
-                        item.rate 
-                    from 
+                    select
+                        item.rate
+                    from
                         `tabHotel Room Pricing Item` item,
                         `tabHotel Room Pricing` pricing
                     where
                         item.parent = pricing.name
                         and item.item = %s
-                        and %s between pricing.from_date 
+                        and %s between pricing.from_date
                             and pricing.to_date""", (item, day))
 
                 if day_rate:
@@ -129,6 +129,7 @@ def get_rooms_booked(room_type, day, exclude_reservation=None):
                 and reservation.to_date""".format(exclude_condition=exclude_condition),
                          (room_type, day))[0][0] or 0
 
+
 @frappe.whitelist()
 def make_sales_invoice(source_name, target_doc=None, ignore_permissions=False):
     # Should use get_mapped_doc ?
@@ -163,18 +164,17 @@ def make_sales_invoice(source_name, target_doc=None, ignore_permissions=False):
     reservation.save()
 
     frappe.db.commit()
-    
+
     return target
 
 
 def make_status_as_paid(doc, method):
-	for ref in doc.references:
-		sales_invoice_name = frappe.db.get_value("Sales Invoice",
-			{"reference_doctype": ref.reference_doctype, "reference_name": ref.reference_name,
-			"docstatus": 1})
-
-		if sales_invoice_name:
-			doc = frappe.get_doc("Hotel Room Reservation", sales_invoice_name)
-			if doc.status != "Paid":
-				doc.db_set('status', 'Paid')
-				frappe.db.commit()
+    # for invoice in [ref.reference_name for ref in doc.references if ref.reference_doctype == "Sales Invoice"]:
+    for invoice in [ref.reference_name for ref in doc.references]:
+        doclist = frappe.get_list("Hotel Room Reservation", fields=['name', 'status'], filters={
+            "sales_invoice": invoice})
+        for doc in doclist:
+            if doc['status'] == 'Invoiced':
+                frappe.db.set_value("Hotel Room Reservation",
+                                    doc['name'], "status", "Paid")
+                frappe.db.commit()

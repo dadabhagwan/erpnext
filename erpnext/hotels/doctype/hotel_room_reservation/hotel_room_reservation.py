@@ -8,7 +8,7 @@ import json
 from frappe.model.document import Document
 from frappe import _
 from frappe.utils import date_diff, add_days, flt
-from erpnext import get_company_currency, get_default_company
+from erpnext import get_company_currency, get_default_company, get_default_currency
 
 
 class HotelRoomUnavailableError(frappe.ValidationError):
@@ -63,12 +63,53 @@ class HotelRoomReservation(Document):
 
         return self.total_rooms[item]
 
+    def post_room_and_tax(self, date):
+        '''Post room charges for the day. Used in Night Audit and at the time of Check In'''
+        exists = [d for d in self.items if d.date ==
+                  date and d.item == self.item]
+        if exists:
+            return
+
+        if not self.room_status == "Checked In":
+            frappe.throw("Can post only to 'Checked In' rooms")
+        if date < self.from_date or date > self.to_date:
+            frappe.throw("Date is out of booking period.")
+
+        day_rate = frappe.db.sql("""
+            select
+                item.rate
+            from
+                `tabHotel Room Pricing Item` item,
+                `tabHotel Room Pricing` pricing
+            where
+                item.parent = pricing.name
+                and item.item = %s
+                and %s between pricing.from_date
+                    and pricing.to_date""", (self.item, date))
+
+        if not day_rate:
+            frappe.throw(
+                _("Please set Hotel Room Rate on {}".format(
+                    frappe.format(date, dict(fieldtype="Date")))), exc=HotelRoomPricingNotSetError)
+        else:
+            day_rate = day_rate[0][0]
+            self.append("items", {
+                "date": date,
+                "item": self.item,
+                "qty": 1,
+                "currency": get_default_currency(),
+                "rate": day_rate,
+                "amount": day_rate
+            })
+            self.net_total += day_rate
+            self.save()
+
     def set_rates(self):
         self.net_total = 0
         for d in self.items:
             if not d.item:
                 continue
-            item = self.item if d.item == 'Booking Advance' else d.item
+            item = self.item
             net_rate = 0.0
             for i in xrange(date_diff(self.to_date, self.from_date)):
                 day = add_days(self.from_date, i)

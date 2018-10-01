@@ -160,6 +160,85 @@ erpnext.hotels.hotel_room_reservation = {
 				erpnext.hotels.hotel_room_reservation.cancel_reservation(frm);
 			});
 		}
+
+		frm.page.add_action_item(__("Cancel Reservation"), function () {
+			erpnext.hotels.hotel_room_reservation.cancel_reservation(frm);
+		});
+	},
+
+	add_group_buttons: (frm) => {
+
+		frm.page.add_inner_button(__("Add Rooms"), function () {
+			erpnext.hotels.hotel_room_reservation.show_add_dialog(frm);
+		}, __('Group'));
+
+		if (frm.doc.group_id) {
+			frm.page.add_inner_button(__("Show Group Summary"), function () {
+				erpnext.hotels.hotel_room_reservation.show_group_summary(frm);
+			}, __('Group'));
+			// 
+		}
+
+	},
+
+	show_add_dialog: (frm) => {
+
+		let d = new frappe.ui.Dialog({
+			title: __('Add Rooms to Group Reservation'),
+			fields: [
+				{
+					"label": "Item",
+					"fieldname": "item",
+					"fieldtype": "Link",
+					"options": "Item",
+					"default": frm.doc.item,
+					"reqd": 1,
+				},
+				{
+					"label": "From",
+					"fieldname": "from_date",
+					"fieldtype": "Date",
+					"default": frm.doc.from_date,
+					"reqd": 1,
+				},
+				{
+					"label": "To",
+					"fieldname": "to_date",
+					"fieldtype": "Date",
+					"default": frm.doc.to_date,
+					"reqd": 1,
+				},
+				{
+					"label": "Qty",
+					"fieldname": "qty",
+					"fieldtype": "Int",
+					"default": 1,
+					"reqd": 1,
+				}],
+
+			primary_action_label: __('Add Rooms'),
+			primary_action: function () {
+				var data = d.get_values();
+
+				let args = {
+					'item': data.item,
+					'qty': data.qty,
+					'from_date': data.from_date,
+					'to_date': data.to_date
+				};
+
+				frappe.call({
+					doc: frm.doc,
+					args: args,
+					method: 'add_group_items',
+				}).done((r) => {
+					frm.reload_doc();
+					d.hide();
+				});
+
+			}
+		});
+		d.show();
 	},
 
 	add_group_buttons: (frm) => {

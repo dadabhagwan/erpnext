@@ -32,7 +32,10 @@ class HotelRoomReservation(Document):
             day = add_days(self.from_date, i)
             self.rooms_booked = {}
 
-            for d in [frappe._dict({"item": self.item, "qty": 1})]:
+            items = [frappe._dict(
+                {"item": self.item, "qty": 1})] if self.item else []
+
+            for d in items:
                 if not d.item in self.rooms_booked:
                     self.rooms_booked[d.item] = 0
 
@@ -90,6 +93,27 @@ class HotelRoomReservation(Document):
             d.rate = net_rate
             d.amount = net_rate * flt(d.qty)
             self.net_total += d.amount
+
+    def add_group_items(self, args=None):
+        if not self.group_id:
+            self.db_set('group_id', self.name)
+
+        for n in range(args.get('qty')):
+            doc = frappe.copy_doc(self)
+            doc.item = args.get('item')
+            doc.from_date = args.get('from_date')
+            doc.to_date = args.get('to_date')
+            doc.group_id = self.group_id or self.name
+            doc.save(ignore_permissions=True)
+            frappe.db.commit()
+
+    def checkin_group(self):
+        filters = {"group_id": self.group_id,
+                   "room_status": "Booked", "room": ["!=", ""]}
+        doclist = frappe.db.get_list("Hotel Room Reservation", filters=filters)
+        for name in doclist:
+            frappe.db.set_value("Hotel Room Reservation",
+                                name, "room_status", "Checked In")
 
 
 @frappe.whitelist()

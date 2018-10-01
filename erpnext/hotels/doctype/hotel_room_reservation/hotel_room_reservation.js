@@ -10,6 +10,8 @@ frappe.ui.form.on('Hotel Room Reservation', {
 				filters: { 'from_date': doc.from_date, 'to_date': doc.to_date, 'item': doc.item }
 			}
 		}
+
+
 	},
 
 	refresh: function (frm) {
@@ -18,6 +20,9 @@ frappe.ui.form.on('Hotel Room Reservation', {
 		}
 
 		erpnext.hotels.hotel_room_reservation.setup_custom_actions(frm);
+
+		//group tools
+		erpnext.hotels.hotel_room_reservation.add_group_buttons(frm);
 
 	},
 
@@ -83,10 +88,6 @@ erpnext.hotels.hotel_room_reservation = {
 			}
 		}
 
-		frm.page.add_action_item(__("Add to Group"), function () {
-			erpnext.hotels.hotel_room_reservation.show_group_dialog(frm);
-		});
-
 		if (!frm.doc.sales_invoice) {
 			frm.page.add_action_item(__("Make Invoice"), function () {
 				erpnext.hotels.hotel_room_reservation.make_sales_invoice(frm);
@@ -98,7 +99,93 @@ erpnext.hotels.hotel_room_reservation = {
 		});
 	},
 
+	add_group_buttons: (frm) => {
+
+		frm.page.add_inner_button(__("Add Rooms"), function () {
+			erpnext.hotels.hotel_room_reservation.show_add_dialog(frm);
+		}, __('Group'));
+
+		if (frm.doc.group_id) {
+			frm.page.add_inner_button(__("Show Group Summary"), function () {
+				erpnext.hotels.hotel_room_reservation.show_group_summary(frm);
+			}, __('Group'));
+			// 
+		}
+
+	},
+
+	show_add_dialog: (frm) => {
+
+		let d = new frappe.ui.Dialog({
+			title: __('Add Rooms to Group Reservation'),
+			fields: [
+				{
+					"label": "Item",
+					"fieldname": "item",
+					"fieldtype": "Link",
+					"options": "Item",
+					"default": frm.doc.item,
+					"reqd": 1,
+				},
+				{
+					"label": "From",
+					"fieldname": "from_date",
+					"fieldtype": "Date",
+					"default": frm.doc.from_date,
+					"reqd": 1,
+				},
+				{
+					"label": "To",
+					"fieldname": "to_date",
+					"fieldtype": "Date",
+					"default": frm.doc.to_date,
+					"reqd": 1,
+				},
+				{
+					"label": "Qty",
+					"fieldname": "qty",
+					"fieldtype": "Int",
+					"default": 1,
+					"reqd": 1,
+				}],
+
+			primary_action_label: __('Add Rooms'),
+			primary_action: function () {
+				var data = d.get_values();
+
+				let args = {
+					'item': data.item,
+					'qty': data.qty,
+					'from_date': data.from_date,
+					'to_date': data.to_date
+				};
+
+				frappe.call({
+					doc: frm.doc,
+					args: args,
+					method: 'add_group_items',
+				}).done((r) => {
+					frm.reload_doc();
+					d.hide();
+				});
+
+			}
+		});
+		d.show();
+	},
+
+	checkin_group: () => {
+		let frm = this.frm;
+		frappe.call({
+			doc: frm.doc,
+			method: "checkin_group",
+		}).done((r) => {
+			frm.reload_doc();
+		});
+	},
+
 	checkin: (frm) => {
+		debugger;
 		if (!frm.doc.room) {
 			frappe.msgprint(__("Please select a room for reservation."))
 			return;
@@ -114,7 +201,6 @@ erpnext.hotels.hotel_room_reservation = {
 	},
 
 	checkout: (frm) => {
-		console.log('');
 		frappe.call({
 			"method": "erpnext.hotels.doctype.hotel_room_reservation.hotel_room_reservation.checkout",
 			"args": { "hotel_room_reservation": frm.doc, is_group: 0 }
@@ -130,7 +216,7 @@ erpnext.hotels.hotel_room_reservation = {
 	recalculate_rates: (frm) => {
 
 		if (!frm.doc.from_date || !frm.doc.to_date
-			|| !frm.doc.items.length) {
+			|| !frm.doc.items || !frm.doc.items.length) {
 			return;
 		}
 
@@ -157,6 +243,53 @@ erpnext.hotels.hotel_room_reservation = {
 		})
 	},
 
+	show_group_summary: (frm) => {
+		let d = new frappe.ui.Dialog({
+			title: __('Group Summary for {0}', [frm.doc.group_id]),
+			fields: [{ "fieldtype": "HTML", "fieldname": "summary_html" }]
+		});
+
+		frappe.db.get_list('Hotel Room Reservation', {
+			fields: ['name', 'item', 'from_date', 'to_date', 'net_total'],
+			filters: { group_id: frm.doc.group_id },
+			// or_filters: [['for_user', '=', frappe.session.user], ['for_user', '=', '']]
+		}).then((group) => {
+			let template = erpnext.hotels.hotel_room_reservation.get_summary_template();
+			d.get_field("summary_html").$wrapper.append(frappe.render_template(template, { "group": group, "frm": frm }));
+			d.show();
+		});
+	},
+
+	get_summary_template: function (frm) {
+		return `
+			<table class="table table-bordered small">
+				<thead>
+					<tr>
+						<td style="width: 18%">{{ __("Reservation Id") }}</td>
+						<td style="width: 37%">{{ __("Item") }}</td>
+						<td style="width: 15%">{{ __("From Date") }}</td>
+						<td style="width: 15%">{{ __("To Date") }}</td>
+						<td style="width: 15%" class="text-right">{{ __("Outstanding") }}</td>
+					</tr>
+				</thead>
+				<tbody>
+					{% $.each(group, (idx, d) => { %}
+					<tr>
+						<td> <a class="invoice-link" href="/desk#Form/Hotel Room Reservation/{{ d.name }}">{{ d.name }}</a> </td>
+						<td> {{ d.item }} </td>
+						<td> {{ d.from_date }} </td>
+						<td> {{ d.to_date }} </td>
+						<td class="text-right"> {{ format_currency(d.outstanding_amount, "INR", 2) }} </td>
+					</div>
+					{% }); %}
+				</tbody>
+			</table>
+		<div class="text-right">						
+			<button class="btn btn-default" onclick="erpnext.hotels.hotel_room_reservation.checkin_group();return false;">Check In</button>
+			<button class="btn btn-danger">Check Out</button>
+		</div>
+		`;
+	}
 }
 
 

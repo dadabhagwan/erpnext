@@ -7,7 +7,7 @@ import frappe
 import json
 from frappe.model.document import Document
 from frappe import _
-from frappe.utils import date_diff, add_days, flt, cint, nowdate, nowtime, cstr, now_datetime
+from frappe.utils import date_diff, add_days, flt
 from erpnext import get_company_currency, get_default_company, get_default_currency
 
 
@@ -24,21 +24,8 @@ class HotelRoomReservation(Document):
         self.total_rooms = {}
         self.set_rates()
         self.validate_availability()
-        self.set_item_date()
-        if self.status == "Completed":
-            self.make_housekeeping_entry()
         if not self.company:
             self.company = get_default_company()
-
-    def make_housekeeping_entry(self):
-        doc = frappe.db.sql(
-            "select name from `tabHousekeeping` where date(creation)=date(%s) and reservation = %s limit 1", (self.checkout_date, self.name))
-        if not doc:
-            doc = frappe.new_doc("Housekeeping")
-            doc.room = self.room
-            doc.room_status = "Dirty"
-            doc.reservation = self.name
-            doc.insert(ignore_permissions=True)
 
     def validate_availability(self):
         for i in xrange(date_diff(self.to_date, self.from_date)):
@@ -120,8 +107,9 @@ class HotelRoomReservation(Document):
     def set_rates(self):
         self.net_total = 0
         for d in self.items:
-            if not d.item or not frappe.db.get_value("Item", d.item, ["item_group"]) == "Hotel Room Package":
+            if not d.item:
                 continue
+            item = self.item
             net_rate = 0.0
             for i in xrange(date_diff(self.to_date, self.from_date)):
                 day = add_days(self.from_date, i)
@@ -135,7 +123,7 @@ class HotelRoomReservation(Document):
                         item.parent = pricing.name
                         and item.item = %s
                         and %s between pricing.from_date
-                            and pricing.to_date""", (d.item, day))
+                            and pricing.to_date""", (item, day))
 
                 if day_rate:
                     net_rate += day_rate[0][0]
@@ -160,10 +148,13 @@ class HotelRoomReservation(Document):
             doc.save(ignore_permissions=True)
             frappe.db.commit()
 
-    def set_item_date(self):
-        for d in self.items:
-            if not d.date:
-                d.date = nowdate()
+    def checkin_group(self):
+        filters = {"group_id": self.group_id,
+                   "room_status": "Booked", "room": ["!=", ""]}
+        doclist = frappe.db.get_list("Hotel Room Reservation", filters=filters)
+        for name in doclist:
+            frappe.db.set_value("Hotel Room Reservation",
+                                name, "room_status", "Checked In")
 
     def set_item_date(self):
         for d in self.items:
@@ -185,24 +176,10 @@ def get_room_rate(hotel_room_reservation):
 
 
 @frappe.whitelist()
-def get_group(reservation):
-    return frappe.db.sql("""
-        select r.name, r.item, r.from_date, r.to_date, r.net_total, r.room, r.room_status, coalesce(i.amount,0) amount
-        from `tabHotel Room Reservation` r
-        left outer join 
-        (
-            select sum(amount) amount, parent from `tabHotel Room Reservation Item`
-            group by parent
-        ) i on i.parent = r.name
-        where r.group_id = '%s'
-    """ % (reservation,), as_dict=1)
-
-
-@frappe.whitelist()
-def validate_folio(reservation):
-    # check for unsettled open folio e.g in case of group booking
-    # reservation = frappe.get_doc('Hotel Room Reservation', reservation)
-    return {"is_folio_open": 0}
+def checkout(hotel_room_reservation, is_group=False):
+    """Checkout and handle group checkout"""
+    doc = frappe.get_doc(json.loads(hotel_room_reservation))
+    return doc.as_dict()
 
 
 @frappe.whitelist()
@@ -259,17 +236,9 @@ def make_sales_invoice(source_name, target_doc=None, ignore_permissions=False):
         target.taxes_and_charges = hotel_settings.default_taxes_and_charges
         target.set_taxes()
 
-    # TODO: validate all reservations in group if ready to invoice
-    items = frappe.db.sql("""
-        select r.name, i.item item_code, i.qty, i.rate, i.amount
-        from `tabHotel Room Reservation` r
-        inner join `tabHotel Room Reservation Item` i on i.parent = r.name 
-        where r.group_id = %s or r.name = %s
-    """, (reservation.group_id, source_name), as_dict=1)
-
-    for d in items:
+    for d in reservation.items:
         target.append("items", {
-            "item_code": d.item_code,
+            "item_code": d.item,
             "qty": d.qty,
             "rate": d.rate
         })
@@ -279,9 +248,10 @@ def make_sales_invoice(source_name, target_doc=None, ignore_permissions=False):
     target.calculate_taxes_and_totals()
 
     target.insert()
+    reservation.sales_invoice = target.name
+    reservation.status = "Invoiced"
+    reservation.save()
 
-    frappe.db.sql(
-        """update `tabHotel Room Reservation` set sales_invoice = %s, status='Invoiced' where group_id = %s""", (target.name, reservation.group_id))
     frappe.db.commit()
 
     return target

@@ -68,7 +68,7 @@ class Guest(Document):
         fullname = "{0} {1} {2} - {3}".format(
             self.first_name, self.middle_name[0] if self.middle_name else "", self.last_name, self.name.replace("GUES-", ""))
         default_customer_group = frappe.db.get_single_value(
-            "Hotel Settings", "default_customer_group") or "Hotel Guest"
+            "Hotel Settings", "default_customer_group") or "Commercial"
 
         customer.update({
                         "gender": self.gender,

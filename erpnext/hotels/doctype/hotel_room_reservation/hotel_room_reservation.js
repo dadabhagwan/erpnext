@@ -10,8 +10,6 @@ frappe.ui.form.on('Hotel Room Reservation', {
 				filters: { 'from_date': doc.from_date, 'to_date': doc.to_date, 'item': doc.item }
 			}
 		}
-
-
 	},
 
 	refresh: function (frm) {
@@ -45,6 +43,10 @@ frappe.ui.form.on('Hotel Room Reservation', {
 		//TODO: Prevent change if room already checked in, because rates will be affected
 	},
 
+	guest: function (frm) {
+
+	}
+
 
 });
 
@@ -68,8 +70,8 @@ erpnext.hotels.hotel_room_reservation = {
 		frm.set_value("from_date", frappe.datetime.nowdate());
 		frm.set_value("to_date", frappe.datetime.add_days(frappe.datetime.nowdate(), 1));
 
-		frm.set_value("guest_name", "Test Customer 1");
-		frm.set_value("customer", "Darshanarthi");
+		// frm.set_value("guest_name", "Test Customer 1");
+		// frm.set_value("customer", "Darshanarthi");
 		frm.set_value("company", frappe.defaults.get_default('company'));
 	},
 

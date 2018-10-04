@@ -4,6 +4,14 @@
 frappe.ui.form.on('Hotel Room Reservation', {
 
 	onload: function (frm) {
+		frm.fields_dict['item'].get_query = function (doc, cdt, cdn) {
+			return {
+				filters: [
+					["Item", "item_group", "=", "Hotel Room Package"]
+				]
+			}
+		}
+
 		frm.fields_dict['room'].get_query = function (doc, cdt, cdn) {
 			return {
 				query: "erpnext.hotels.utils.get_available_rooms",
@@ -449,7 +457,9 @@ erpnext.hotels.hotel_room_reservation = {
 				<thead>
 					<tr>
 						<td style="width: 18%">{{ __("Reservation Id") }}</td>
-						<td style="width: 37%">{{ __("Item") }}</td>
+						<td style="width: 17%">{{ __("Item") }}</td>
+						<td style="width: 10%">{{ __("Room") }}</td>
+						<td style="width: 10%">{{ __("Status") }}</td>
 						<td style="width: 15%">{{ __("From Date") }}</td>
 						<td style="width: 15%">{{ __("To Date") }}</td>
 						<td style="width: 15%" class="text-right">{{ __("Outstanding") }}</td>
@@ -460,6 +470,8 @@ erpnext.hotels.hotel_room_reservation = {
 					<tr>
 						<td> <a class="invoice-link" href="/desk#Form/Hotel Room Reservation/{{ d.name }}">{{ d.name }}</a> </td>
 						<td> {{ d.item }} </td>
+						<td> {{ d.room }} </td>
+						<td> {{ d.room_status }} </td>
 						<td> {{ d.from_date }} </td>
 						<td> {{ d.to_date }} </td>
 						<td class="text-right"> {{ format_currency(d.outstanding_amount, "INR", 2) }} </td>

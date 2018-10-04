@@ -12,7 +12,7 @@ class HotelRoomPackage(Document):
 			item = frappe.get_doc(dict(
 				doctype = 'Item',
 				item_code = self.name,
-				item_group = 'Products',
+				item_group = 'Hotel Room Package',
 				is_stock_item = 0,
 				stock_uom = 'Unit'
 			))

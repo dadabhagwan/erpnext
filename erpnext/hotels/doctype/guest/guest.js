@@ -10,11 +10,6 @@ frappe.ui.form.on('Guest', {
 		if (!frm.doc.__islocal) {
 			frm.trigger("render_address");
 		}
-
-		if (!doc.__islocal && !doc.customer) {
-			frm.add_custom_button(__("Customer"), () => { frm.trigger('create_customer'); }, __("Make"));
-		}
-
 		if (!doc.__islocal) {
 			frm.add_custom_button(__("Reservation"), () => {
 				frappe.route_options = {
@@ -26,13 +21,6 @@ frappe.ui.form.on('Guest', {
 			}, __("Make"));
 		}
 
-	},
-
-	create_customer: function () {
-		frappe.model.open_mapped_doc({
-			method: "erpnext.hotels.doctype.guest.guest.make_customer",
-			frm: cur_frm
-		})
 	},
 
 	render_address: function (frm) {

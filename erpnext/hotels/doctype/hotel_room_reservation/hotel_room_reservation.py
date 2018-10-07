@@ -166,6 +166,20 @@ def get_room_rate(hotel_room_reservation):
 
 
 @frappe.whitelist()
+def get_group(reservation):
+    return frappe.db.sql("""
+        select r.name, r.item, r.from_date, r.to_date, r.net_total, r.room, r.room_status, coalesce(i.amount,0) amount
+        from `tabHotel Room Reservation` r
+        left outer join 
+        (
+            select sum(amount) amount, parent from `tabHotel Room Reservation Item`
+            group by parent
+        ) i on i.parent = r.name
+        where r.group_id = '%s'
+    """ % (reservation,), as_dict=1)
+
+
+@frappe.whitelist()
 def checkout(hotel_room_reservation, is_group=False):
     """Checkout and handle group checkout"""
     doc = frappe.get_doc(json.loads(hotel_room_reservation))

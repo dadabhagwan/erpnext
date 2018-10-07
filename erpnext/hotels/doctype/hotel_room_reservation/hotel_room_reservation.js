@@ -107,9 +107,10 @@ erpnext.hotels.hotel_room_reservation = {
 					erpnext.hotels.hotel_room_reservation.checkout(frm);
 				});
 
-				frm.page.add_action_item(__("Cancel Check In"), function () {
-					erpnext.hotels.hotel_room_reservation.cancel_checkin(frm);
-				});
+				if (frm.doc.from_date == frappe.datetime.get_today() && !frm.doc.sales_invoice)
+					frm.page.add_action_item(__("Cancel Check In"), function () {
+						erpnext.hotels.hotel_room_reservation.cancel_checkin(frm);
+					});
 			}
 		}
 

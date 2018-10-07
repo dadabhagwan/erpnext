@@ -250,9 +250,17 @@ def make_sales_invoice(source_name, target_doc=None, ignore_permissions=False):
         target.taxes_and_charges = hotel_settings.default_taxes_and_charges
         target.set_taxes()
 
-    for d in reservation.items:
+    # TODO: validate all reservations in group if ready to invoice
+    items = frappe.db.sql("""
+        select r.name, i.item item_code, i.qty, i.rate, i.amount
+        from `tabHotel Room Reservation` r
+        inner join `tabHotel Room Reservation Item` i on i.parent = r.name 
+        where r.group_id = %s or r.name = %s
+    """, (reservation.group_id, source_name), as_dict=1)
+
+    for d in items:
         target.append("items", {
-            "item_code": d.item,
+            "item_code": d.item_code,
             "qty": d.qty,
             "rate": d.rate
         })
@@ -262,10 +270,9 @@ def make_sales_invoice(source_name, target_doc=None, ignore_permissions=False):
     target.calculate_taxes_and_totals()
 
     target.insert()
-    reservation.sales_invoice = target.name
-    reservation.status = "Invoiced"
-    reservation.save()
 
+    frappe.db.sql(
+        """update `tabHotel Room Reservation` set sales_invoice = %s, status='Invoiced' where group_id = %s""", (target.name, reservation.group_id))
     frappe.db.commit()
 
     return target

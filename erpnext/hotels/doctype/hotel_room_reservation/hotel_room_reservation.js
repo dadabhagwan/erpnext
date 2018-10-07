@@ -286,6 +286,23 @@ erpnext.hotels.hotel_room_reservation = {
 			fields: [{ "fieldtype": "HTML", "fieldname": "summary_html" }]
 		});
 
+		frappe.call({
+			"method": "erpnext.hotels.doctype.hotel_room_reservation.hotel_room_reservation.get_group",
+			"args": { "reservation": frm.doc.group_id }
+		}).then((r) => {
+			let template = erpnext.hotels.hotel_room_reservation.get_summary_template();
+			d.get_field("summary_html").$wrapper.append(frappe.render_template(template, { "group": r.message, "frm": frm }));
+			d.show();
+		});
+	},
+
+
+	___show_group_summary: (frm) => {
+		let d = new frappe.ui.Dialog({
+			title: __('Group Summary for {0}', [frm.doc.group_id]),
+			fields: [{ "fieldtype": "HTML", "fieldname": "summary_html" }]
+		});
+
 		frappe.db.get_list('Hotel Room Reservation', {
 			fields: ['name', 'item', 'from_date', 'to_date', 'net_total'],
 			filters: { group_id: frm.doc.group_id },
@@ -302,8 +319,8 @@ erpnext.hotels.hotel_room_reservation = {
 			<table class="table table-bordered small">
 				<thead>
 					<tr>
-						<td style="width: 18%">{{ __("Reservation Id") }}</td>
-						<td style="width: 17%">{{ __("Item") }}</td>
+						<td style="width: 10%">{{ __("Res Id") }}</td>
+						<td style="width: 25%">{{ __("Item") }}</td>
 						<td style="width: 10%">{{ __("Room") }}</td>
 						<td style="width: 10%">{{ __("Status") }}</td>
 						<td style="width: 15%">{{ __("From Date") }}</td>
@@ -314,21 +331,18 @@ erpnext.hotels.hotel_room_reservation = {
 				<tbody>
 					{% $.each(group, (idx, d) => { %}
 					<tr>
-						<td> <a class="invoice-link" href="/desk#Form/Hotel Room Reservation/{{ d.name }}">{{ d.name }}</a> </td>
+						<td> <a class="invoice-link" href="/desk#Form/Hotel Room Reservation/{{ d.name }}">{{ parseInt(d.name.slice(4)) }}</a> </td>
 						<td> {{ d.item }} </td>
 						<td> {{ d.room }} </td>
 						<td> {{ d.room_status }} </td>
 						<td> {{ d.from_date }} </td>
 						<td> {{ d.to_date }} </td>
-						<td class="text-right"> {{ format_currency(d.outstanding_amount, "INR", 2) }} </td>
+						<td class="text-right"> {{ format_currency(d.amount, "INR", 2) }} </td>
 					</div>
 					{% }); %}
 				</tbody>
 			</table>
-		<div class="text-right">						
-			<button class="btn btn-default" onclick="erpnext.hotels.hotel_room_reservation.checkin_group();return false;">Check In</button>
-			<button class="btn btn-danger">Check Out</button>
-		</div>
+
 		`;
 	}
 }

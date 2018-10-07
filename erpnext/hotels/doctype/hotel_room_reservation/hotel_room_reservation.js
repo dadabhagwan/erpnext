@@ -106,6 +106,10 @@ erpnext.hotels.hotel_room_reservation = {
 				frm.page.add_action_item(__("Check Out"), function () {
 					erpnext.hotels.hotel_room_reservation.checkout(frm);
 				});
+
+				frm.page.add_action_item(__("Cancel Check In"), function () {
+					erpnext.hotels.hotel_room_reservation.cancel_checkin(frm);
+				});
 			}
 		}
 
@@ -287,7 +291,6 @@ erpnext.hotels.hotel_room_reservation = {
 	},
 
 	checkin: (frm) => {
-		debugger;
 		if (!frm.doc.room) {
 			frappe.msgprint(__("Please select a room for reservation."))
 			return;
@@ -384,12 +387,36 @@ erpnext.hotels.hotel_room_reservation = {
 	add_room_charge: function (frm, date, qty) {
 		// let days = frappe.datetime.get_diff(frm.doc.to_date, frm.doc.from_date);
 		frm.add_child("items", {
+			"date": frappe.datetime.get_today(),
 			"item": frm.doc.item,
 			"qty": days
 		})
 		frm.refresh_field("items");
 		erpnext.hotels.hotel_room_reservation.recalculate_rates(frm);
 	},
+
+	cancel_checkin: (frm) => {
+		debugger;
+
+		//remove room charge for the day
+		var index = -1;
+		for (var j = 0; j < frm.doc.items.length; j++) {
+			if (frm.doc.items[j].date == frappe.datetime.get_today() && frm.doc.item == frm.doc.items[j].item) {
+				index = j;
+			}
+		}
+		if (index > -1) {
+			frm.doc.items.splice(index, 1);
+			frm.get_field("items").grid.grid_rows[index].remove();
+		}
+		frm.set_value('room', null);
+		frm.set_value('room_status', null);
+
+		frm.refresh_field("items");
+		erpnext.hotels.hotel_room_reservation.recalculate_rates(frm);
+	},
+
+
 
 	checkout: (frm) => {
 		frappe.call({

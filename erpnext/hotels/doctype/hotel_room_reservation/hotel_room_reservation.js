@@ -96,9 +96,10 @@ erpnext.hotels.hotel_room_reservation = {
 					erpnext.hotels.hotel_room_reservation.checkout(frm);
 				});
 
-				frm.page.add_action_item(__("Cancel Check In"), function () {
-					erpnext.hotels.hotel_room_reservation.cancel_checkin(frm);
-				});
+				if (frm.doc.from_date == frappe.datetime.get_today() && !frm.doc.sales_invoice)
+					frm.page.add_action_item(__("Cancel Check In"), function () {
+						erpnext.hotels.hotel_room_reservation.cancel_checkin(frm);
+					});
 			}
 		}
 
@@ -108,9 +109,11 @@ erpnext.hotels.hotel_room_reservation = {
 			});
 		}
 
-		frm.page.add_action_item(__("Cancel Reservation"), function () {
-			erpnext.hotels.hotel_room_reservation.cancel_reservation(frm);
-		});
+		if (!frm.doc.sales_invoice && frm.doc.status == 'Booked') {
+			frm.page.add_action_item(__("Cancel Reservation"), function () {
+				erpnext.hotels.hotel_room_reservation.cancel_reservation(frm);
+			});
+		}
 	},
 
 	add_group_buttons: (frm) => {

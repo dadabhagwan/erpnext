@@ -7,7 +7,7 @@ import frappe
 import json
 from frappe.model.document import Document
 from frappe import _
-from frappe.utils import date_diff, add_days, flt
+from frappe.utils import date_diff, add_days, flt, cint, nowdate, nowtime, cstr
 from erpnext import get_company_currency, get_default_company, get_default_currency
 
 
@@ -180,10 +180,24 @@ def get_group(reservation):
 
 
 @frappe.whitelist()
-def checkout(hotel_room_reservation, is_group=False):
+def settle(hotel_room_reservation):
     """Checkout and handle group checkout"""
     doc = frappe.get_doc(json.loads(hotel_room_reservation))
+
+    hotel_settings = frappe.get_single("Hotel Settings")
+    if not hotel_settings.default_checkout_time:
+        frappe.throw("Default checkout time is not set in Hotel Settings")
+
+    if nowtime() > hotel_settings.default_checkout_time:
+        doc.post_room_and_tax(nowdate())
     return doc.as_dict()
+
+
+@frappe.whitelist()
+def validate_folio(reservation):
+    # check for unsettled open folio e.g in case of group booking
+    # reservation = frappe.get_doc('Hotel Room Reservation', reservation)
+    return {"is_folio_open": 0}
 
 
 def get_rooms_booked(room_type, day, exclude_reservation=None):

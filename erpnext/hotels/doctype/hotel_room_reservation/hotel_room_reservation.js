@@ -10,7 +10,7 @@ frappe.ui.form.on('Hotel Room Reservation', {
 					["Item", "item_group", "=", "Hotel Room Package"]
 				]
 			}
-		}
+		};
 
 		frm.fields_dict['room'].get_query = function (doc, cdt, cdn) {
 			return {
@@ -34,6 +34,11 @@ frappe.ui.form.on('Hotel Room Reservation', {
 	refresh: function (frm) {
 		if (frm.is_new()) {
 			erpnext.hotels.hotel_room_reservation.set_default_values(frm);
+		} else if (frm.doc.status == "Completed") {
+			frm.set_read_only();
+			frm.fields_dict["items"].df.read_only = 1;
+			frm.set_intro(__("This reservation is 'Completed' and cannot be edited."));
+			frm.refresh_fields();
 		}
 
 		erpnext.hotels.hotel_room_reservation.setup_custom_actions(frm);

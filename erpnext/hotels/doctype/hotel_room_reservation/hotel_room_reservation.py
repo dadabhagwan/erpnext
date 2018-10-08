@@ -207,6 +207,13 @@ def validate_folio(reservation):
     return {"is_folio_open": 0}
 
 
+@frappe.whitelist()
+def validate_folio(reservation):
+    # check for unsettled open folio e.g in case of group booking
+    # reservation = frappe.get_doc('Hotel Room Reservation', reservation)
+    return {"is_folio_open": 0}
+
+
 def get_rooms_booked(room_type, day, exclude_reservation=None):
     exclude_condition = ''
     if exclude_reservation:

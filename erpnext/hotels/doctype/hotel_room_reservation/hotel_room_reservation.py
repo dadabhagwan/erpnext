@@ -107,9 +107,8 @@ class HotelRoomReservation(Document):
     def set_rates(self):
         self.net_total = 0
         for d in self.items:
-            if not d.item:
+            if not d.item or not frappe.db.get_value("Item", d.item, ["item_group"])[0][0] == "Hotel Room Package":
                 continue
-            item = self.item
             net_rate = 0.0
             for i in xrange(date_diff(self.to_date, self.from_date)):
                 day = add_days(self.from_date, i)
@@ -123,7 +122,7 @@ class HotelRoomReservation(Document):
                         item.parent = pricing.name
                         and item.item = %s
                         and %s between pricing.from_date
-                            and pricing.to_date""", (item, day))
+                            and pricing.to_date""", (d.item, day))
 
                 if day_rate:
                     net_rate += day_rate[0][0]

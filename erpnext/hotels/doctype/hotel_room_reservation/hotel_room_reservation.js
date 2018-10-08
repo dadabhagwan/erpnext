@@ -10,19 +10,30 @@ frappe.ui.form.on('Hotel Room Reservation', {
 					["Item", "item_group", "=", "Hotel Room Package"]
 				]
 			}
-		}
+		};
 
 		frm.fields_dict['room'].get_query = function (doc, cdt, cdn) {
 			return {
 				query: "erpnext.hotels.utils.get_available_rooms",
 				filters: { 'from_date': doc.from_date, 'to_date': doc.to_date, 'item': doc.item }
 			}
-		}
+		};
+
+		frm.set_query("item", "items", function (doc, cdt, cdn) {
+			return {
+				filters: [["item_group", "=", "Services"]]
+			}
+		});
 	},
 
 	refresh: function (frm) {
 		if (frm.is_new()) {
 			erpnext.hotels.hotel_room_reservation.set_default_values(frm);
+		} else if (frm.doc.status == "Completed") {
+			frm.set_read_only();
+			frm.fields_dict["items"].df.read_only = 1;
+			frm.set_intro(__("This reservation is 'Completed' and cannot be edited."));
+			frm.refresh_fields();
 		}
 
 		erpnext.hotels.hotel_room_reservation.setup_custom_actions(frm);

@@ -128,6 +128,12 @@ erpnext.hotels.hotel_room_reservation = {
 
 	setup_custom_actions: (frm) => {
 
+		if (frm.doc.status === "Due Out") {
+			frm.page.add_action_item(__("Check Out"), function () {
+				erpnext.hotels.hotel_room_reservation.checkout(frm);
+			});
+		}
+
 		if (frm.doc.item && frm.doc.room) {
 			if (frm.doc.room_status == "Booked") {
 				frm.page.add_action_item(__("Check In"), function () {
@@ -400,6 +406,15 @@ erpnext.hotels.hotel_room_reservation = {
 	},
 
 
+	settle: (frm) => {
+		frappe.call({
+			"method": "erpnext.hotels.doctype.hotel_room_reservation.hotel_room_reservation.settle",
+			"args": { "hotel_room_reservation": frm.doc }
+		}).done((r) => {
+			var doc = frappe.model.sync(r.message)[0];
+			frm.set_value("status", "Due Out");
+		});
+	},
 
 	add_room_charge: function (frm, date, qty) {
 		// let days = frappe.datetime.get_diff(frm.doc.to_date, frm.doc.from_date);

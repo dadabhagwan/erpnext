@@ -170,6 +170,11 @@ class HotelRoomReservation(Document):
             if not d.date:
                 d.date = nowdate()
 
+    def set_item_date(self):
+        for d in self.items:
+            if not d.date:
+                d.date = nowdate()
+
 
 @frappe.whitelist()
 def get_room_rate(hotel_room_reservation):

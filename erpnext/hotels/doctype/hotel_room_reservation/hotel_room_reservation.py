@@ -25,8 +25,20 @@ class HotelRoomReservation(Document):
         self.set_rates()
         self.validate_availability()
         self.set_item_date()
+        if self.status == "Completed":
+            self.make_housekeeping_entry()
         if not self.company:
             self.company = get_default_company()
+
+    def make_housekeeping_entry(self):
+        doc = frappe.db.sql(
+            "select name from `tabHousekeeping` where date(creation)=date(%s) and reservation = %s limit 1", (self.checkout_date, self.name))
+        if not doc:
+            doc = frappe.new_doc("Housekeeping")
+            doc.room = self.room
+            doc.room_status = "Dirty"
+            doc.reservation = self.name
+            doc.insert(ignore_permissions=True)
 
     def validate_availability(self):
         for i in xrange(date_diff(self.to_date, self.from_date)):
@@ -148,21 +160,6 @@ class HotelRoomReservation(Document):
             doc.save(ignore_permissions=True)
             frappe.db.commit()
 
-    def checkout(self):
-        self.room_status = "Checked Out"
-        folio = validate_folio(self.name)
-        if folio and cint(folio["is_folio_open"]) == 0:
-            self.status = "Completed"
-        self.checkout_date = now_datetime()
-        self.save()
-
-        # make housekeeping entry
-        he = frappe.new_doc("Housekeeping")
-        he.room = self.room
-        he.room_status = "Dirty"
-        he.fo_status = "Vacant"
-        he.insert(ignore_permissions=True)
-
     def set_item_date(self):
         for d in self.items:
             if not d.date:
@@ -197,7 +194,7 @@ def get_group(reservation):
 
 
 @frappe.whitelist()
-def settle(hotel_room_reservation):
+def checkout(hotel_room_reservation):
     """Set charges for today if late checkout"""
     doc = frappe.get_doc(json.loads(hotel_room_reservation))
 
@@ -207,6 +204,10 @@ def settle(hotel_room_reservation):
 
     if nowtime() > hotel_settings.default_checkout_time:
         doc.post_room_and_tax(nowdate())
+
+    doc.status = "Completed"
+    doc.room_status = "Checked Out"
+    doc.checkout_date = now_datetime()
     return doc.as_dict()
 
 

@@ -24,6 +24,7 @@ class HotelRoomReservation(Document):
         self.total_rooms = {}
         self.set_rates()
         self.validate_availability()
+        self.set_item_date()
         if not self.company:
             self.company = get_default_company()
 
@@ -161,6 +162,11 @@ class HotelRoomReservation(Document):
         he.room_status = "Dirty"
         he.fo_status = "Vacant"
         he.insert(ignore_permissions=True)
+
+    def set_item_date(self):
+        for d in self.items:
+            if not d.date:
+                d.date = nowdate()
 
 
 @frappe.whitelist()

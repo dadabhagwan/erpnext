@@ -24,6 +24,7 @@ class HotelRoomReservation(Document):
         self.total_rooms = {}
         self.set_rates()
         self.validate_availability()
+        self.set_item_date()
         if not self.company:
             self.company = get_default_company()
 

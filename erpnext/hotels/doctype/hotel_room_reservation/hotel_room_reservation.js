@@ -123,9 +123,6 @@ erpnext.hotels.hotel_room_reservation = {
 	set_default_values: function (frm) {
 		frm.set_value("from_date", frappe.datetime.nowdate());
 		frm.set_value("to_date", frappe.datetime.add_days(frappe.datetime.nowdate(), 1));
-
-		// frm.set_value("guest_name", "Test Customer 1");
-		// frm.set_value("customer", "Darshanarthi");
 		frm.set_value("company", frappe.defaults.get_default('company'));
 	},
 

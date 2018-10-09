@@ -128,12 +128,6 @@ erpnext.hotels.hotel_room_reservation = {
 
 	setup_custom_actions: (frm) => {
 
-		if (frm.doc.status === "Due Out") {
-			frm.page.add_action_item(__("Check Out"), function () {
-				erpnext.hotels.hotel_room_reservation.checkout(frm);
-			});
-		}
-
 		if (frm.doc.item && frm.doc.room) {
 			if (frm.doc.room_status == "Booked") {
 				frm.page.add_action_item(__("Check In"), function () {
@@ -143,9 +137,10 @@ erpnext.hotels.hotel_room_reservation = {
 
 			if (frm.doc.status == "In House" && frm.doc.room_status === "Checked In") {
 
-				frm.page.add_action_item(__("Settle"), function () {
-					erpnext.hotels.hotel_room_reservation.settle(frm);
+				frm.page.add_action_item(__("Check Out"), function () {
+					erpnext.hotels.hotel_room_reservation.checkout(frm);
 				});
+
 
 				if (frm.doc.from_date == frappe.datetime.get_today() && !frm.doc.sales_invoice)
 					frm.page.add_action_item(__("Cancel Check In"), function () {
@@ -285,23 +280,13 @@ erpnext.hotels.hotel_room_reservation = {
 	},
 
 
-	settle: (frm) => {
+	checkout: (frm) => {
 		frappe.call({
-			"method": "erpnext.hotels.doctype.hotel_room_reservation.hotel_room_reservation.settle",
+			"method": "erpnext.hotels.doctype.hotel_room_reservation.hotel_room_reservation.checkout",
 			"args": { "hotel_room_reservation": frm.doc }
 		}).done((r) => {
-			var doc = frappe.model.sync(r.message)[0];
-			frm.set_value("status", "Due Out");
-		});
-	},
-
-	checkout: (frm) => {
-		// Check for open folio
-		frappe.call({
-			"method": "checkout",
-			"doc": frm.doc,
-		}).done((r) => {
-			frm.reload_doc();
+			var doc = frappe.model.sync(r.message);
+			frm.refresh();
 		});
 	},
 

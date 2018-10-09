@@ -266,24 +266,11 @@ erpnext.hotels.hotel_room_reservation = {
 	checkout: (frm) => {
 		// Check for open folio
 		frappe.call({
-			"method": "erpnext.hotels.doctype.hotel_room_reservation.hotel_room_reservation.validate_folio",
-			"args": { "reservation": frm.doc.name }
+			"method": "checkout",
+			"doc": frm.doc,
 		}).done((r) => {
-			if (r.message.is_folio_open) {
-				frappe.confirm(__("Reservation is not settled. Do you want to Check Out?"), function () {
-					// status for open folio reservations
-					erpnext.hotels.hotel_room_reservation._checkout(frm, "Completed");
-				});
-			} else {
-				erpnext.hotels.hotel_room_reservation._checkout(frm, "Completed");
-			}
+			frm.reload_doc();
 		});
-	},
-
-	_checkout: (frm, status) => {
-		frm.set_value("status", status);
-		frm.set_value("room_status", "Checked Out");
-		frm.set_value("checkout_date", frappe.datetime.now_datetime());
 	},
 
 	recalculate_rates: (frm) => {

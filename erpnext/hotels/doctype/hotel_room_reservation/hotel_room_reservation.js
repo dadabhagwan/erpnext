@@ -69,20 +69,55 @@ frappe.ui.form.on('Hotel Room Reservation', {
 
 	guest: function (frm) {
 
-	}
+	},
 
+	get_item_data: function (frm, item) {
+		frm.call({
+			method: "erpnext.stock.get_item_details.get_item_details",
+			child: item,
+			args: {
+				args: {
+					item_code: item.item,
+					doctype: "Sales Invoice",
+					price_list: frappe.defaults.get_default('selling_price_list'),
+					currency: frappe.defaults.get_default('Currency'),
+					price_list_currency: frappe.defaults.get_default('Currency'),
+					company: "DBF",
+					qty: item.qty || 1,
+					company: frm.doc.company,
+					conversion_rate: 1,
+					customer: frm.doc.customer,
+					is_pos: 0,
+				}
+			},
+			callback: function (r) {
+				console.log(r);
+				item.rate = r.message.price_list_rate;
+				item.amount = item.rate * (item.qty || 1)
+				frm.refresh_field("items");
+			}
+		});
+	}
 
 });
 
 frappe.ui.form.on('Hotel Room Reservation Item', {
 
 	item: function (frm, doctype, name) {
+		const item = locals[doctype][name];
+		frm.events.get_item_data(frm, item);
 		erpnext.hotels.hotel_room_reservation.recalculate_rates(frm);
 	},
 
-	qty: function (frm) {
+	qty: function (frm, doctype, name) {
+		const item = locals[doctype][name];
+		if (!item.rate) {
+			frm.events.get_item_data(frm, item);
+		}
+		item.amount = item.rate * item.qty;
 		erpnext.hotels.hotel_room_reservation.recalculate_rates(frm);
-	}
+	},
+
 
 });
 

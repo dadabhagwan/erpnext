@@ -7,7 +7,7 @@ import frappe
 import json
 from frappe.model.document import Document
 from frappe import _
-from frappe.utils import date_diff, add_days, flt, cint, nowdate, nowtime, cstr
+from frappe.utils import date_diff, add_days, flt, cint, nowdate, nowtime, cstr, now_datetime
 from erpnext import get_company_currency, get_default_company, get_default_currency
 
 
@@ -147,13 +147,20 @@ class HotelRoomReservation(Document):
             doc.save(ignore_permissions=True)
             frappe.db.commit()
 
-    def checkin_group(self):
-        filters = {"group_id": self.group_id,
-                   "room_status": "Booked", "room": ["!=", ""]}
-        doclist = frappe.db.get_list("Hotel Room Reservation", filters=filters)
-        for name in doclist:
-            frappe.db.set_value("Hotel Room Reservation",
-                                name, "room_status", "Checked In")
+    def checkout(self):
+        self.room_status = "Checked Out"
+        folio = validate_folio(self.name)
+        if folio and cint(folio["is_folio_open"]) == 0:
+            self.status = "Completed"
+        self.checkout_date = now_datetime()
+        self.save()
+
+        # make housekeeping entry
+        he = frappe.new_doc("Housekeeping")
+        he.room = self.room
+        he.room_status = "Dirty"
+        he.fo_status = "Vacant"
+        he.insert(ignore_permissions=True)
 
     def set_item_date(self):
         for d in self.items:
@@ -190,7 +197,7 @@ def get_group(reservation):
 
 @frappe.whitelist()
 def settle(hotel_room_reservation):
-    """Checkout and handle group checkout"""
+    """Set charges for today if late checkout"""
     doc = frappe.get_doc(json.loads(hotel_room_reservation))
 
     hotel_settings = frappe.get_single("Hotel Settings")

@@ -97,7 +97,7 @@ frappe.ui.form.on('Hotel Room Reservation', {
 				frm.refresh_field("items");
 			}
 		});
-	}
+	},
 
 });
 
@@ -145,7 +145,6 @@ erpnext.hotels.hotel_room_reservation = {
 				frm.page.add_action_item(__("Check Out"), function () {
 					erpnext.hotels.hotel_room_reservation.checkout(frm);
 				});
-
 
 				if (frm.doc.from_date == frappe.datetime.get_today() && !frm.doc.sales_invoice)
 					frm.page.add_action_item(__("Cancel Check In"), function () {
@@ -424,9 +423,8 @@ erpnext.hotels.hotel_room_reservation = {
 			"qty": days
 		})
 
-		frm.refresh_field("items");
-		erpnext.hotels.hotel_room_reservation.recalculate_rates(frm);
 	},
+
 
 	cancel_checkin: (frm) => {
 		debugger;
@@ -450,15 +448,18 @@ erpnext.hotels.hotel_room_reservation = {
 	},
 
 
-	checkout: (frm) => {
-		frappe.call({
-			"method": "erpnext.hotels.doctype.hotel_room_reservation.hotel_room_reservation.checkout",
-			"args": { "hotel_room_reservation": frm.doc }
-		}).done((r) => {
-			var doc = frappe.model.sync(r.message);
-			frm.refresh();
-		});
+
+	add_room_charge: function (frm, date, qty) {
+		// let days = frappe.datetime.get_diff(frm.doc.to_date, frm.doc.from_date);
+		frm.add_child("items", {
+			"date": date,
+			"item": frm.doc.item,
+			"qty": qty
+		})
+		frm.refresh_field("items");
+		erpnext.hotels.hotel_room_reservation.recalculate_rates(frm);
 	},
+
 
 	recalculate_rates: (frm) => {
 
@@ -502,24 +503,6 @@ erpnext.hotels.hotel_room_reservation = {
 		}).then((r) => {
 			let template = erpnext.hotels.hotel_room_reservation.get_summary_template();
 			d.get_field("summary_html").$wrapper.append(frappe.render_template(template, { "group": r.message, "frm": frm }));
-			d.show();
-		});
-	},
-
-
-	___show_group_summary: (frm) => {
-		let d = new frappe.ui.Dialog({
-			title: __('Group Summary for {0}', [frm.doc.group_id]),
-			fields: [{ "fieldtype": "HTML", "fieldname": "summary_html" }]
-		});
-
-		frappe.db.get_list('Hotel Room Reservation', {
-			fields: ['name', 'item', 'from_date', 'to_date', 'net_total'],
-			filters: { group_id: frm.doc.group_id },
-			// or_filters: [['for_user', '=', frappe.session.user], ['for_user', '=', '']]
-		}).then((group) => {
-			let template = erpnext.hotels.hotel_room_reservation.get_summary_template();
-			d.get_field("summary_html").$wrapper.append(frappe.render_template(template, { "group": group, "frm": frm }));
 			d.show();
 		});
 	},

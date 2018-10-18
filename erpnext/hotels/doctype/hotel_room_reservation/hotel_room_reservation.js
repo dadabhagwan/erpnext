@@ -92,7 +92,7 @@ frappe.ui.form.on('Hotel Room Reservation', {
 				frm.refresh_field("items");
 			}
 		});
-	}
+	},
 
 });
 
@@ -140,7 +140,6 @@ erpnext.hotels.hotel_room_reservation = {
 				frm.page.add_action_item(__("Check Out"), function () {
 					erpnext.hotels.hotel_room_reservation.checkout(frm);
 				});
-
 
 				if (frm.doc.from_date == frappe.datetime.get_today() && !frm.doc.sales_invoice)
 					frm.page.add_action_item(__("Cancel Check In"), function () {
@@ -243,20 +242,62 @@ erpnext.hotels.hotel_room_reservation = {
 			frappe.msgprint(__("Please select a room for reservation."))
 			return;
 		}
-		frm.set_value("checkin_date", frappe.datetime.now_datetime())
-		frm.set_value('status', 'In House');
-		frm.set_value('room_status', 'Checked In');
 
-		let days = frappe.datetime.get_diff(frm.doc.to_date, frm.doc.from_date);
-		frm.add_child("items", {
-			"date": frappe.datetime.get_today(),
-			"item": frm.doc.item,
-			"qty": days
-		})
-
-		frm.refresh_field("items");
-		erpnext.hotels.hotel_room_reservation.recalculate_rates(frm);
+		frappe.run_serially([
+			() => {
+				frappe.model.with_doc('Hotel Settings')
+					.then((doc) => {
+						if (doc.default_checkin_time > frappe.datetime.now_time()) {
+							frappe.confirm(
+								__('Early Checkin. Do you wish to apply charges for yesterday?'),
+								function () {
+									let room_date = frappe.datetime.add_days(frappe.datetime.get_today(), -1);
+									erpnext.hotels.hotel_room_reservation.add_room_charge(frm, room_date, 1);
+								}
+							);
+						}
+					});
+			},
+			() => {
+				let room_date = frappe.datetime.get_today();
+				erpnext.hotels.hotel_room_reservation.add_room_charge(frm, room_date, 1);
+			},
+			() => {
+				frm.set_value("checkin_date", frappe.datetime.now_datetime())
+				frm.set_value('status', 'In House');
+				frm.set_value('room_status', 'Checked In');
+			},
+		])
 	},
+
+
+	checkout: (frm) => {
+
+		frappe.run_serially([
+			() => {
+				if (cur_frm.doc.checkin_date < frappe.datetime.get_today()) {
+					frappe.model.with_doc('Hotel Settings')
+						.then((doc) => {
+							if (doc.default_checkout_time < frappe.datetime.now_time()) {
+								frappe.confirm(
+									__('Late Checkout. Do you wish to apply charges for today?'),
+									function () {
+										erpnext.hotels.hotel_room_reservation.add_room_charge(frm, frappe.datetime.get_today(), 1);
+									}
+								);
+							}
+						});
+				};
+			},
+			() => {
+				frm.set_value("checkout_date", frappe.datetime.now_datetime())
+				frm.set_value('status', 'Completed');
+				frm.set_value('room_status', 'Checked Out');
+			}
+		]);
+
+	},
+
 
 	cancel_checkin: (frm) => {
 		debugger;
@@ -280,15 +321,18 @@ erpnext.hotels.hotel_room_reservation = {
 	},
 
 
-	checkout: (frm) => {
-		frappe.call({
-			"method": "erpnext.hotels.doctype.hotel_room_reservation.hotel_room_reservation.checkout",
-			"args": { "hotel_room_reservation": frm.doc }
-		}).done((r) => {
-			var doc = frappe.model.sync(r.message);
-			frm.refresh();
-		});
+
+	add_room_charge: function (frm, date, qty) {
+		// let days = frappe.datetime.get_diff(frm.doc.to_date, frm.doc.from_date);
+		frm.add_child("items", {
+			"date": date,
+			"item": frm.doc.item,
+			"qty": qty
+		})
+		frm.refresh_field("items");
+		erpnext.hotels.hotel_room_reservation.recalculate_rates(frm);
 	},
+
 
 	recalculate_rates: (frm) => {
 
@@ -332,24 +376,6 @@ erpnext.hotels.hotel_room_reservation = {
 		}).then((r) => {
 			let template = erpnext.hotels.hotel_room_reservation.get_summary_template();
 			d.get_field("summary_html").$wrapper.append(frappe.render_template(template, { "group": r.message, "frm": frm }));
-			d.show();
-		});
-	},
-
-
-	___show_group_summary: (frm) => {
-		let d = new frappe.ui.Dialog({
-			title: __('Group Summary for {0}', [frm.doc.group_id]),
-			fields: [{ "fieldtype": "HTML", "fieldname": "summary_html" }]
-		});
-
-		frappe.db.get_list('Hotel Room Reservation', {
-			fields: ['name', 'item', 'from_date', 'to_date', 'net_total'],
-			filters: { group_id: frm.doc.group_id },
-			// or_filters: [['for_user', '=', frappe.session.user], ['for_user', '=', '']]
-		}).then((group) => {
-			let template = erpnext.hotels.hotel_room_reservation.get_summary_template();
-			d.get_field("summary_html").$wrapper.append(frappe.render_template(template, { "group": group, "frm": frm }));
 			d.show();
 		});
 	},

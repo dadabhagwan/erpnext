@@ -2,6 +2,15 @@
 // For license information, please see license.txt
 
 frappe.ui.form.on('Guest', {
+	onload: function(frm) {
+		frm.fields_dict['customer'].get_query = function(doc) {
+			return {
+				filters: {
+					'customer_type': 'Individual'
+				}
+			}
+		}
+	},
 	refresh: function (frm) {
 		var doc = frm.doc;
 

@@ -35,7 +35,7 @@ def get_data(filters):
 	for key in filters:
 		if key in ['hotel_room_type','room','item'] and filters.get(key) == 1:
 			index.append(key)
-	if not len(index):
+	if not len(index) or len(data) == 0:
 		return [[],[]]
 	values = "revenue"
 	

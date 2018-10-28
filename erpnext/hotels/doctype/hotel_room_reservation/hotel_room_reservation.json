@@ -317,6 +317,7 @@
    "bold": 0, 
    "collapsible": 0, 
    "columns": 0, 
+   "fetch_from": "", 
    "fieldname": "sales_invoice", 
    "fieldtype": "Link", 
    "hidden": 0, 

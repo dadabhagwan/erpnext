@@ -30,9 +30,9 @@ frappe.ui.form.on('Hotel Room Reservation', {
 			}
 		});
 
-		frm.fields_dict['profile_section'].collapse();
-		frm.fields_dict['accounting_section'].collapse();
-		frm.fields_dict['reservation_details_section'].collapse();
+		// frm.fields_dict['profile_section'].collapse();
+		// frm.fields_dict['accounting_section'].collapse();
+		// frm.fields_dict['reservation_details_section'].collapse();
 	},
 
 	refresh: function (frm) {

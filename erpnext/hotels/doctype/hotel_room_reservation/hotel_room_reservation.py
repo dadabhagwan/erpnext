@@ -126,14 +126,29 @@ class HotelRoomReservation(Document):
         self.net_total += day_rate
         self.save()
 
+    def get_item_rate(self, item_code):
+        from erpnext.stock.get_item_details import get_item_details
+        price_list, price_list_currency = frappe.db.get_values(
+            "Price List", {"selling": 1}, ['name', 'currency'])[0]
+        args = {
+            'doctype': "Sales Invoice",
+            'item_code': item_code,
+            'company': self.company,
+            'customer': self.customer,
+            'selling_price_list': price_list,
+            'price_list_currency': price_list_currency,
+            'plc_conversion_rate': 1.0,
+            'conversion_rate': 1.0
+        }
+        return get_item_details(args).price_list_rate
+
     def set_rates(self):
         self.net_total = 0
         for d in self.items:
             if not d.item or not frappe.db.get_value("Item", d.item, ["item_group"]) == "Hotel Room Package":
-                if d.amount:
-                    self.net_total += d.amount
-                continue
-            d.rate = self.get_day_rate(d.item, d.date)
+                d.rate = self.get_item_rate(d.item)
+            else:
+                d.rate = self.get_day_rate(d.item, d.date)
             d.amount = d.rate * flt(d.qty)
             self.net_total += d.amount
 

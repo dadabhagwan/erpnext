@@ -633,13 +633,6 @@ def get_data():
 			"label": _("Room Reservation")
 		},
 		{
-			"module_name": "Booking Reference",
-			"_doctype": "Booking Reference",
-			"color": "#1C4E80",
-			"icon": "fa fa-book",
-			"type": "link",
-			"link": "List/Booking Reference"
-		},{
 			"module_name": "Night Audit",
 			"_doctype": "Night Audit",
 			"color": "#2c3e50",

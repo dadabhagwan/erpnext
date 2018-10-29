@@ -38,7 +38,7 @@ class Guest(Document):
         return address_list
 
     def validate(self):
-        self.link_customer_address()
+        # self.link_customer_address()
         self.full_name = ' '.join(
             filter(None, (self.first_name, self.middle_name, self.last_name)))
 

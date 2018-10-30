@@ -393,7 +393,7 @@ def get_data():
 		},
 		{
 			"module_name": "Hotels",
-			"color": "#EA81E8",
+			"color": "#5C4743",
 			"icon": "fa fa-bed",
 			"type": "module",
 			"label": _("Hotels"),

@@ -76,18 +76,7 @@ class HotelRoomReservation(Document):
 
         return self.total_rooms[item]
 
-    def post_room_and_tax(self, date):
-        '''Post room charges for the day. Used in Night Audit and at the time of Check In'''
-        exists = [d for d in self.items if d.date ==
-                  date and d.item == self.item]
-        if exists:
-            return
-
-        if not self.room_status == "Checked In":
-            frappe.throw("Can post only to 'Checked In' rooms")
-        if date < self.from_date or date > self.to_date:
-            frappe.throw("Date is out of booking period.")
-
+    def get_day_rate(self, item, date):
         day_rate = frappe.db.sql("""
             select
                 item.rate
@@ -105,17 +94,37 @@ class HotelRoomReservation(Document):
                 _("Please set Hotel Room Rate on {}".format(
                     frappe.format(date, dict(fieldtype="Date")))), exc=HotelRoomPricingNotSetError)
         else:
-            day_rate = day_rate[0][0]
+            return day_rate[0][0]
+
+    def post_room_and_tax(self, date):
+        '''Post room charges for the day. Used in Night Audit and at the time of Check In'''
+        exists = [d for d in self.items if d.date ==
+                  date and d.item == self.item]
+        if exists:
+            return
+
+        if not self.room_status == "Checked In":
+            frappe.throw("Can post only to 'Checked In' rooms")
+        if date < self.from_date or date > self.to_date:
+            frappe.throw("Date is out of booking period.")
+
+        line_items = [(self.item, 1)]
+        if self.extra_bed:
+            line_items.append(("Extra Bed", self.extra_bed))
+
+        for d in line_items:
+            day_rate = self.get_day_rate(d[0], date)
             self.append("items", {
                 "date": date,
-                "item": self.item,
-                "qty": 1,
+                "item": d[0],
+                "qty": d[1],
                 "currency": get_default_currency(),
                 "rate": day_rate,
                 "amount": day_rate
             })
-            self.net_total += day_rate
-            self.save()
+
+        self.net_total += day_rate
+        self.save()
 
     def set_rates(self):
         self.net_total = 0
@@ -179,7 +188,7 @@ def get_group(reservation):
     return frappe.db.sql("""
         select r.name, r.item, r.from_date, r.to_date, r.net_total, r.room, r.room_status, coalesce(i.amount,0) amount
         from `tabHotel Room Reservation` r
-        left outer join 
+        left outer join
         (
             select sum(amount) amount, parent from `tabHotel Room Reservation Item`
             group by parent
@@ -218,6 +227,15 @@ def get_rooms_booked(room_type, day, exclude_reservation=None):
                          (room_type, day))[0][0] or 0
 
 
+def get_gst_item(rate):
+    rate = flt(rate)
+    gst_slabs = [(0, 1999, "Slab 1"), (2000, 6999, "Slab 2"),
+                 (7000, 3000, "Slab 3")]
+    item = [d[2] for d in gst_slabs if d[0] <= rate and d[1] >= rate]
+    if len(item):
+        return item[0]
+
+
 @frappe.whitelist()
 def make_sales_invoice(source_name, target_doc=None, ignore_permissions=False):
     # Should use get_mapped_doc ?
@@ -239,7 +257,7 @@ def make_sales_invoice(source_name, target_doc=None, ignore_permissions=False):
     items = frappe.db.sql("""
         select r.name, i.item item_code, i.qty, i.rate, i.amount
         from `tabHotel Room Reservation` r
-        inner join `tabHotel Room Reservation Item` i on i.parent = r.name 
+        inner join `tabHotel Room Reservation Item` i on i.parent = r.name
         where r.group_id = %s or r.name = %s
     """, (reservation.group_id, source_name), as_dict=1)
 

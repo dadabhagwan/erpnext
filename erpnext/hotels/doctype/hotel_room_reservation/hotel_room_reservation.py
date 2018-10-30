@@ -87,7 +87,7 @@ class HotelRoomReservation(Document):
                 item.parent = pricing.name
                 and item.item = %s
                 and %s between pricing.from_date
-                    and pricing.to_date""", (self.item, date))
+                    and pricing.to_date""", (item, date))
 
         if not day_rate:
             frappe.throw(
@@ -130,30 +130,11 @@ class HotelRoomReservation(Document):
         self.net_total = 0
         for d in self.items:
             if not d.item or not frappe.db.get_value("Item", d.item, ["item_group"]) == "Hotel Room Package":
+                if d.amount:
+                    self.net_total += d.amount
                 continue
-            net_rate = 0.0
-            for i in xrange(date_diff(self.to_date, self.from_date)):
-                day = add_days(self.from_date, i)
-                day_rate = frappe.db.sql("""
-                    select
-                        item.rate
-                    from
-                        `tabHotel Room Pricing Item` item,
-                        `tabHotel Room Pricing` pricing
-                    where
-                        item.parent = pricing.name
-                        and item.item = %s
-                        and %s between pricing.from_date
-                            and pricing.to_date""", (d.item, day))
-
-                if day_rate:
-                    net_rate += day_rate[0][0]
-                else:
-                    frappe.throw(
-                        _("Please set Hotel Room Rate on {}".format(
-                            frappe.format(day, dict(fieldtype="Date")))), exc=HotelRoomPricingNotSetError)
-            d.rate = net_rate
-            d.amount = net_rate * flt(d.qty)
+            d.rate = self.get_day_rate(d.item, d.date)
+            d.amount = d.rate * flt(d.qty)
             self.net_total += d.amount
 
     def add_group_items(self, args=None):
@@ -236,6 +217,75 @@ def get_gst_item(rate):
         return item[0]
 
 
+def get_invoice_items(name):
+    return frappe.db.sql("""
+select trim(concat(a.item,' ',slabs.slab)) item_code, a.qty, a.rate, a.amount
+from 
+(
+	select item, 1 qty, sum(rate) rate, sum(amount) amount
+	from
+	(
+		select m.item, t.date, t.rate, t.amount
+		from 
+		`tabHotel Room Reservation` m 
+		inner join `tabHotel Room Reservation Item` t on m.name = t.parent and t.item = m.item
+        where m.name = '{0}'
+		union all
+		select m.item, t.date, t.rate * t.qty rate, sum(t.amount) amount 
+		from 
+		`tabHotel Room Reservation` m 
+		inner join `tabHotel Room Reservation Item` t on m.name = t.parent and t.item = 'Extra Bed'
+        where m.name = '{0}'
+	) x
+	group by item
+) a
+inner join
+(
+	select 0 from_rate, 999 to_rate, '(NIL)' slab union all
+	select 1000 from_rate, 2499 to_rate, '(12)' slab union all
+	select 2500 from_rate, 7499 to_rate, '(18)' slab union all
+	select 7500 from_rate, 100000 to_rate, '(28)' slab 	
+) slabs on slabs.from_rate <= a.rate and slabs.to_rate >= a.rate
+union all
+select t.item item_code, sum(t.qty) qty, t.rate, sum(t.amount) amount
+from 
+`tabHotel Room Reservation` m 
+inner join `tabHotel Room Reservation Item` t on m.name = t.parent
+inner join tabItem i on i.item_code = t.item and i.item_group <> 'Hotel Room Package'
+where m.name = '{0}'
+group by t.item, rate
+    """.format(name), as_dict=1, debug=0)
+
+
+def make_item(item, company):
+    tax_rate = 0
+    if "(NIL)" in item:
+        tax_rate = 0.0
+    elif "(12)" in item:
+        tax_rate = 6.0
+    elif "(18)" in item:
+        tax_rate = 9.0
+    elif "(28)" in item:
+        tax_rate = 14.0
+
+    doc = frappe.get_doc({
+        "doctype": "Item",
+        "item_code": item,
+        "item_name": item,
+        "description": item,
+        "item_group": "Hotel Room Package",
+        "is_stock_item": 0,
+        "stock_uom": 'Unit'
+    })
+    if tax_rate > 0:
+        for d in ["CGST", "SGST"]:
+            doc.append("taxes", {"tax_type": "%s - %s" %
+                                 (d, company), "tax_rate": tax_rate})
+    doc.insert(ignore_permissions=True)
+    frappe.db.commit()
+    return doc.name
+
+
 @frappe.whitelist()
 def make_sales_invoice(source_name, target_doc=None, ignore_permissions=False):
     # Should use get_mapped_doc ?
@@ -254,18 +304,16 @@ def make_sales_invoice(source_name, target_doc=None, ignore_permissions=False):
         target.set_taxes()
 
     # TODO: validate all reservations in group if ready to invoice
-    items = frappe.db.sql("""
-        select r.name, i.item item_code, i.qty, i.rate, i.amount
-        from `tabHotel Room Reservation` r
-        inner join `tabHotel Room Reservation Item` i on i.parent = r.name
-        where r.group_id = %s or r.name = %s
-    """, (reservation.group_id, source_name), as_dict=1)
 
-    for d in items:
+    for d in get_invoice_items(source_name):
+        item = d.item_code
+        if not frappe.db.exists("Item", d.item_code):
+            item = make_item(d.item_code, reservation.company)
         target.append("items", {
-            "item_code": d.item_code,
+            "item_code": item,
             "qty": d.qty,
-            "rate": d.rate
+            "rate": d.rate,
+            "amount": d.amount
         })
 
     target.flags.ignore_permissions = 1

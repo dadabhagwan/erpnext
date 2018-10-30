@@ -332,7 +332,14 @@ erpnext.hotels.hotel_room_reservation = {
 			"date": date,
 			"item": frm.doc.item,
 			"qty": qty
-		})
+		});
+		if (frm.doc.extra_bed) {
+			frm.add_child("items", {
+				"date": date,
+				"item": "Extra Bed",
+				"qty": frm.doc.extra_bed
+			});
+		};
 		frm.refresh_field("items");
 		erpnext.hotels.hotel_room_reservation.recalculate_rates(frm);
 	},

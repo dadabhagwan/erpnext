@@ -250,7 +250,8 @@ erpnext.hotels.hotel_room_reservation = {
 			frappe.msgprint(__("Please select a room for reservation."))
 			return;
 		}
-		if (!frm.doc.from_date != frappe.datetime.nowdate()) {
+		
+		if (frm.doc.from_date != frappe.datetime.nowdate()) {
 			frappe.msgprint(__("Please set from_date to today."))
 			return;
 		}

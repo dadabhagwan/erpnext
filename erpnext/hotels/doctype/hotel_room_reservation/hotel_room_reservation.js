@@ -7,15 +7,18 @@ frappe.ui.form.on('Hotel Room Reservation', {
 		frm.fields_dict['item'].get_query = function (doc, cdt, cdn) {
 			return {
 				filters: [
-					["Item", "item_group", "=", "Hotel Room Package"]
+					["Item", "item_group", "=", "Hotel Room Package"],
+					["Item", "item_code" , "!=", "Extra Bed"]
 				]
 			}
 		};
 
 		frm.fields_dict['room'].get_query = function (doc, cdt, cdn) {
-			return {
-				query: "erpnext.hotels.utils.get_available_rooms",
-				filters: { 'from_date': doc.from_date, 'to_date': doc.to_date, 'item': doc.item }
+			if (doc.from_date && doc.to_date && doc.item) {
+				return {
+					query: "erpnext.hotels.utils.get_available_rooms",
+					filters: { 'from_date': doc.from_date, 'to_date': doc.to_date, 'item': doc.item }
+				}
 			}
 		}
 
@@ -25,7 +28,7 @@ frappe.ui.form.on('Hotel Room Reservation', {
 				filters: [["item_group", "=", "Services"]]
 			}
 		});
-		
+
 		frm.fields_dict['profile_section'].collapse();
 		frm.fields_dict['accounting_section'].collapse();
 		frm.fields_dict['reservation_details_section'].collapse();
@@ -326,6 +329,11 @@ erpnext.hotels.hotel_room_reservation = {
 			frappe.msgprint(__("Please select a room for reservation."))
 			return;
 		}
+		if (!frm.doc.from_date != frappe.datetime.nowdate()) {
+			frappe.msgprint(__("Please set from_date to today."))
+			return;
+		}
+
 
 		frappe.run_serially([
 			() => {

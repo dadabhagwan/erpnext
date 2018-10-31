@@ -277,10 +277,12 @@ def make_item(item, company):
         "is_stock_item": 0,
         "stock_uom": 'Unit'
     })
+
+    from erpnext.setup.doctype.company.company import get_name_with_abbr
     if tax_rate > 0:
         for d in ["CGST", "SGST"]:
-            doc.append("taxes", {"tax_type": "%s - %s" %
-                                 (d, company), "tax_rate": tax_rate})
+            doc.append("taxes", {"tax_type": get_name_with_abbr(
+                d, company), "tax_rate": tax_rate})
     doc.insert(ignore_permissions=True)
     frappe.db.commit()
     return doc.name

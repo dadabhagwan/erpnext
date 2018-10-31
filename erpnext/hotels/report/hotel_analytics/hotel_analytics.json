@@ -1,0 +1,27 @@
+{
+ "add_total_row": 0, 
+ "color": "#EA81E8", 
+ "creation": "2018-10-28 14:03:04.447398", 
+ "disabled": 0, 
+ "docstatus": 0, 
+ "doctype": "Report", 
+ "icon": "fa fa-analytics", 
+ "idx": 0, 
+ "is_standard": "Yes", 
+ "json": "{\"add_total_row\": 1}", 
+ "modified": "2018-10-28 22:12:45.358335", 
+ "modified_by": "Administrator", 
+ "module": "Hotels", 
+ "name": "Hotel Analytics", 
+ "owner": "Administrator", 
+ "prepared_report": 0, 
+ "query": "SELECT hrri.date as \"Date:Date:\",\nhr.hotel_room_type as \"RoomType::\",\nhrr.room as \"Room No:Link/Hotel Room\", \nhrri.item, \nsum(hrri.amount) as \"Revenue:Currency:\"\nFROM \n`tabHotel Room Reservation` hrr INNER JOIN `tabHotel Room Reservation Item` hrri\nON hrri.parent = hrr.name\nINNER JOIN `tabItem` i on hrri.item = i.name\nLEFT OUTER JOIN `tabHotel Room` hr on hrr.room = hr.name \nwhere hrri.date BETWEEN '2018-10-01 00:00:00' AND '2018-11-01 00:00:00'\nGROUP BY hrri.date, hr.hotel_room_type, hrr.room, hrri.item\nORDER BY hrri.date, i.item_group, i.name\n", 
+ "ref_doctype": "Hotel Room Reservation", 
+ "report_name": "Hotel Analytics", 
+ "report_type": "Script Report", 
+ "roles": [
+  {
+   "role": "System Manager"
+  }
+ ]
+}

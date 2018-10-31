@@ -17,6 +17,8 @@ def get_available_rooms(doctype, txt, searchfield, start, page_len, filters):
     if not filters:
         filters = {}
     where_conditions = ''
+    if not filters.get("from_date") or not filters.get("to_date") or not filters.get("item"):
+        frappe.throw("Please select dates and Pacakge for selecting room.")
 
     return frappe.db.sql("""
 select hotel_room.name
@@ -26,12 +28,16 @@ where
 hotel_room_package.item = '{item}'
 and not EXISTS
 (
+	select 1 from tabHousekeeping x where x.room = hotel_room.name and x.room_status = 'Dirty' 
+)
+and not EXISTS
+(
  select 1
  from `tabHotel Room Reservation` r
  where
  r.room = hotel_room.name
  and r.room_status in ('Checked In','Booked')
- and not (r.from_date > '{to_date}' or r.to_date < '{from_date}')
+ and not (r.from_date > '{to_date}' or r.to_date <= '{from_date}')
  {where_conditions}
 )""".format(item=filters.get("item"), from_date=filters.get("from_date"), to_date=filters.get("to_date"), where_conditions=where_conditions))
 
@@ -82,7 +88,7 @@ def get_calendar(from_date, to_date, as_dict=0):
 
     columns = ["room_type", "room_name"] + \
         [getdate(d).strftime('%b %d') for d in dates]
-    
+
     data = frappe.db.sql("""
         select hotel_room_type, hotel_room_name, {select_agg}
         from (

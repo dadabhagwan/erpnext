@@ -58,3 +58,5 @@ class Guest(Document):
                 address.save()
                 frappe.db.commit()
                 break
+        else:
+            frappe.throw('Please add an Address before creating customer.')

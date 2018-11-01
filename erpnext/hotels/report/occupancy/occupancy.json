@@ -6,25 +6,19 @@
  "doctype": "Report", 
  "idx": 0, 
  "is_standard": "Yes", 
- "modified": "2018-09-30 18:24:15.067534", 
+ "modified": "2018-11-01 10:26:20.386740", 
  "modified_by": "Administrator", 
  "module": "Hotels", 
  "name": "Occupancy", 
  "owner": "Administrator", 
  "prepared_report": 0, 
- "query": "select name \"Res ID:Link/Hotel Room Reservation:60\", room \"Room::60\", item \"Room Type::125\", guest_name \"Guest::150\", from_date \"From:Date:90\", to_date \"To:Date:90\", status \"Status::90\", net_total \"Net:Float:90\", 0 \"Advance:Float:90\", customer \"Customer:Link/Customer:120\", room_status \"Rm Status::90\", sales_invoice \"Invoice:Link/Sales Invoice:90\"\nfrom `tabHotel Room Reservation`\nwhere \n1 = case \nwhen %(report)s = 'In House' \nand room_status='Checked In' then 1\nwhen %(report)s = 'Arrival' \nand status in ('Booked','Advance Paid') and from_date >= curdate() then 1 \nwhen %(report)s = 'Departure' \nand to_date>=%(to_date)s and room_status = 'Checked In' then 1\nwhen %(report)s = 'Checked Out' \nand room_status = 'Checked Out' and from_date >= %(from_date)s and to_date <= %(to_date)s then 1\nelse 0 end \norder by from_date, to_date, guest_name\n\n", 
+ "query": "select sales_invoice \"Invoice:Sales Invoice:Link/Invoice:90\", status \"Status::80\", name \"Reservation:Link/Hotel Room Reservation:100\", item \"Room Type::125\", guest_name \"Guest::150\", from_date \"From:Date:90\", to_date \"To:Date:90\", net_total \"Net:Float:90\", customer \"Customer:Link/Customer:120\", room \"Room::60\", room_status \"Rm Status::90\"\nfrom `tabHotel Room Reservation`\nwhere \n1 = case \nwhen %(report)s = 'In House' \nand room_status='Checked In' then 1\nwhen %(report)s = 'UnBilled' \nand status <> 'Booked' and sales_invoice is null then 1\nwhen %(report)s = 'UnPaid' \nand sales_invoice is not null and \nexists (select 1 from `tabSales Invoice` x where x.name=sales_invoice and x.status <> 'Paid') then 1\nwhen %(report)s = 'Arrival' \nand status in ('Booked','Advance Paid') and from_date = %(today)s then 1 \nwhen %(report)s = 'Departure' \nand room_status = 'Checked In' and to_date = %(today)s then 1\nwhen %(report)s = 'Reserved' \nand room_status = 'Booked' and from_date >= %(from_date)s and to_date <= %(to_date)s then 1\nwhen %(report)s = 'History' \nand room_status = 'Checked Out' and from_date >= %(from_date)s and to_date <= %(to_date)s then 1\nelse 0 end \norder by from_date, to_date, guest_name\n\n", 
  "ref_doctype": "Hotel Room Reservation", 
  "report_name": "Occupancy", 
  "report_type": "Query Report", 
  "roles": [
   {
    "role": "System Manager"
-  }, 
-  {
-   "role": "Hotel Reservation User"
-  }, 
-  {
-   "role": "Hotel Manager"
   }
  ]
 }

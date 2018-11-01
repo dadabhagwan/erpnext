@@ -8,7 +8,8 @@ frappe.ui.form.on('Hotel Room Reservation', {
 			return {
 				filters: [
 					["Item", "item_group", "=", "Hotel Room Package"],
-					["Item", "item_code" , "!=", "Extra Bed"]
+					["Item", "item_code", "!=", "Extra Bed"],
+					["Item", "item_code", "not like", "%(%)%"],
 				]
 			}
 		};
@@ -42,6 +43,8 @@ frappe.ui.form.on('Hotel Room Reservation', {
 			frm.fields_dict["items"].df.read_only = 1;
 			frm.set_intro(__("This reservation is 'Completed' and cannot be edited."));
 			frm.refresh_fields();
+		} else if (frm.doc.checkin_date) {
+			frm.set_df_property("item", "read_only", true);
 		}
 
 		erpnext.hotels.hotel_room_reservation.setup_custom_actions(frm);
@@ -65,10 +68,6 @@ frappe.ui.form.on('Hotel Room Reservation', {
 		erpnext.hotels.hotel_room_reservation.recalculate_rates(frm);
 	},
 
-	item: function (frm) {
-		// let days = frappe.datetime.get_diff(frm.doc.to_date, frm.doc.from_date);
-		//TODO: Prevent change if room already checked in, because rates will be affected
-	},
 
 	guest: function (frm) {
 
@@ -105,6 +104,12 @@ frappe.ui.form.on('Hotel Room Reservation', {
 });
 
 frappe.ui.form.on('Hotel Room Reservation Item', {
+
+	rate: function (frm, doctype, name) {
+		if (!frm.doc.item.toLowerCase().indexOf("custom") > -1) {
+			// prevent rate change if not custom package
+		}
+	},
 
 	item: function (frm, doctype, name) {
 		const item = locals[doctype][name];
@@ -329,7 +334,7 @@ erpnext.hotels.hotel_room_reservation = {
 			frappe.msgprint(__("Please select a room for reservation."))
 			return;
 		}
-		
+
 		if (frm.doc.from_date != frappe.datetime.nowdate()) {
 			frappe.msgprint(__("Please set from_date to today."))
 			return;

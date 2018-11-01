@@ -28,7 +28,7 @@ where
 hotel_room_package.item = '{item}'
 and not EXISTS
 (
-	select 1 from tabHousekeeping x where x.room = hotel_room.name and x.room_status = 'Dirty' 
+	select 1 from tabHousekeeping x where x.room = hotel_room.name and x.room_status = 'Dirty' and '{from_date}'=curdate()
 )
 and not EXISTS
 (

@@ -16,7 +16,7 @@ def test():
 def get_available_rooms(doctype, txt, searchfield, start, page_len, filters):
     if not filters:
         filters = {}
-    where_conditions = ''
+    where_conditions = " and hotel_room.name like '%%%s%%' " % txt
     if not filters.get("from_date") or not filters.get("to_date") or not filters.get("item"):
         frappe.throw("Please select dates and Pacakge for selecting room.")
 
@@ -38,8 +38,9 @@ and not EXISTS
  r.room = hotel_room.name
  and r.room_status in ('Checked In','Booked')
  and not (r.from_date > '{to_date}' or r.to_date <= '{from_date}')
- {where_conditions}
-)""".format(item=filters.get("item"), from_date=filters.get("from_date"), to_date=filters.get("to_date"), where_conditions=where_conditions))
+)
+{where_conditions}
+""".format(item=filters.get("item"), from_date=filters.get("from_date"), to_date=filters.get("to_date"), where_conditions=where_conditions),debug=1)
 
 
 @frappe.whitelist()

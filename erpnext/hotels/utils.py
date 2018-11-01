@@ -28,7 +28,7 @@ where
 hotel_room_package.item = '{item}'
 and not EXISTS
 (
-	select 1 from tabHousekeeping x where x.room = hotel_room.name and x.room_status = 'Dirty' 
+	select 1 from tabHousekeeping x where x.room = hotel_room.name and x.room_status = 'Dirty' and '{from_date}'=curdate()
 )
 and not EXISTS
 (
@@ -40,7 +40,7 @@ and not EXISTS
  and not (r.from_date > '{to_date}' or r.to_date <= '{from_date}')
 )
 {where_conditions}
-""".format(item=filters.get("item"), from_date=filters.get("from_date"), to_date=filters.get("to_date"), where_conditions=where_conditions),debug=1)
+""".format(item=filters.get("item"), from_date=filters.get("from_date"), to_date=filters.get("to_date"), where_conditions=where_conditions),debug=0)
 
 
 @frappe.whitelist()

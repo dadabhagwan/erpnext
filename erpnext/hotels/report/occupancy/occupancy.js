@@ -3,6 +3,12 @@
 /* eslint-disable */
 
 frappe.query_reports["Occupancy"] = {
+
+
+    onload: function (report) {
+        report.page.remove_inner_button("Set Chart");
+    },
+
     "filters": [
         {
             "fieldname": "from_date",
@@ -22,7 +28,7 @@ frappe.query_reports["Occupancy"] = {
             "fieldname": "report",
             "label": __("Report"),
             "fieldtype": "Select",
-            "options": "In House\nUnBilled\nUnPaid\nArrival\nDeparture\nReserved\nChecked Out",
+            "options": "In House\nArrival\nDeparture\nReserved\nCompleted",
             "default": "In House",
             "reqd": 1
         },

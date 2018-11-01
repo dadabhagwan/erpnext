@@ -22,9 +22,17 @@ frappe.query_reports["Occupancy"] = {
             "fieldname": "report",
             "label": __("Report"),
             "fieldtype": "Select",
-            "options": "In House\nArrival\nDeparture\nReservations\nChecked Out",
+            "options": "In House\nUnBilled\nUnPaid\nArrival\nDeparture\nReserved\nChecked Out",
             "default": "In House",
             "reqd": 1
-        }
+        },
+        {
+            "fieldname": "today",
+            "label": __("Today"),
+            "fieldtype": "Date",
+            "default": frappe.datetime.nowdate(),
+            "hidden": 1
+        },
+
     ]
 }

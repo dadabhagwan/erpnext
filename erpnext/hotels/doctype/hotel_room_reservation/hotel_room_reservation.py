@@ -325,7 +325,8 @@ def make_sales_invoice(source_name, target_doc=None, ignore_permissions=False):
     target.insert()
 
     frappe.db.sql(
-        """update `tabHotel Room Reservation` set sales_invoice = %s, status='Invoiced' where group_id = %s""", (target.name, reservation.group_id))
+        """update `tabHotel Room Reservation` set sales_invoice = %s, status='Invoiced' 
+        where name = %s or group_id = %s""", (target.name, source_name, reservation.group_id))
     frappe.db.commit()
 
     return target

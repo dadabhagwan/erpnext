@@ -609,7 +609,7 @@ def get_data():
 			"module_name": "Hotel Analytics",
 			"_doctype": "Hotel Room Reservation",
 			"color": "#800080",
-			"icon": "octicon graph",
+			"icon": "fa fa-line-chart",
 			"type": "link",
 			"link": "query-report/Hotel Analytics",
 			"role": "Hotel Manager"

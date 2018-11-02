@@ -573,5 +573,45 @@ def get_data():
 			"type": "module",
 			"label": _("Non Profit"),
 			"hidden": 1
+		},
+		{
+			"module_name": "Hotel Extension",
+			"color": "#5C4743",
+			"icon": "fa fa-home",
+			"type": "module",
+			"label": _("Hotel Extension")
+		},
+		{
+			"module_name": "Billing",
+			"_doctype": "Hotel Room Reservation",
+			"color": "#85bb65",
+			"icon": "fa fa-inr",
+			"type": "link",
+			"link": "query-report/Billing"
+		},
+		{
+			"module_name": "Occupancy",
+			"_doctype": "Hotel Room Reservation",
+			"color": "#E59866",
+			"icon": "glyphicon glyphicon-calendar",
+			"type": "link",
+			"link": "query-report/Occupancy"
+		},
+		{
+			"module_name": "Frontdesk",
+			"color": "#515A5A",
+			"icon": "fa fa-sort-amount-desc",
+			"type": "page",
+			"link": "frontdesk",
+			"label": _("Front Desk")
+		},
+		{
+			"module_name": "Hotel Analytics",
+			"_doctype": "Hotel Room Reservation",
+			"color": "#800080",
+			"icon": "octicon graph",
+			"type": "link",
+			"link": "query-report/Hotel Analytics",
+			"role": "Hotel Manager"
 		}
 	]

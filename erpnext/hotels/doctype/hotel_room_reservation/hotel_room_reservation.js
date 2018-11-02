@@ -26,7 +26,7 @@ frappe.ui.form.on('Hotel Room Reservation', {
 
 		frm.set_query("item", "items", function (doc, cdt, cdn) {
 			return {
-				filters: [["item_group", "=", "Services"]]
+				filters: [["item_group", "in", ["Services", ""]]]
 			}
 		});
 
@@ -126,6 +126,11 @@ frappe.ui.form.on('Hotel Room Reservation Item', {
 		erpnext.hotels.hotel_room_reservation.recalculate_rates(frm);
 	},
 
+
+	items_add: function (frm, cdt, cdn) {
+		locals[cdt][cdn].date = frappe.datetime.get_today();
+		frm.refresh_field("items");
+	},
 
 });
 
@@ -257,7 +262,7 @@ erpnext.hotels.hotel_room_reservation = {
 		}
 
 		if (frm.doc.from_date != frappe.datetime.nowdate()) {
-			frappe.msgprint(__("Please set from_date to today."))
+			frappe.msgprint(__("Please set Arrival date to today."))
 			return;
 		}
 
@@ -291,6 +296,11 @@ erpnext.hotels.hotel_room_reservation = {
 
 
 	checkout: (frm) => {
+
+		if (frm.doc.to_date != frappe.datetime.nowdate()) {
+			frappe.msgprint(__("Please set Departure date to today."))
+			return;
+		}
 
 		frappe.run_serially([
 			() => {

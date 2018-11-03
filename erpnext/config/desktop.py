@@ -600,7 +600,7 @@ def get_data():
 		{
 			"module_name": "Frontdesk",
 			"color": "#515A5A",
-			"icon": "fa fa-sort-amount-desc",
+			"icon": "glyphicon glyphicon-log-in",
 			"type": "page",
 			"link": "frontdesk",
 			"label": _("Front Desk")

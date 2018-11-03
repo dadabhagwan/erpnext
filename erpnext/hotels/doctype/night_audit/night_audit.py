@@ -17,22 +17,19 @@ class NightAudit(Document):
         self.items = []
         filters = {"room_status": "Checked In",
                    "company": self.company, "from_date": ["<=", self.date], "to_date": [">=", self.date]}
-        fields = ['room', 'name', 'item']
+        fields = ['room', 'name', 'item', 'extra_bed']
         doclist = frappe.db.get_list(
             "Hotel Room Reservation", filters=filters, fields=fields)
         for d in doclist:
-            self.append("items", {
-                "room": d["room"],
-                "reservation": d["name"],
-                "item": d["item"],
-                "qty": 1,
-                "currency": get_default_currency(),
-                "rate": 100,
-                "amount": 100
-            })
+            for item in [d["item"]] + ["Extra Bed"] * d["extra_bed"]:
+                self.append("items", {
+                    "room": d["room"],
+                    "reservation": d["name"],
+                    "item": item,
+                    "qty": 1,
+                })
 
     def on_submit(self):
         for d in self.items:
             doc = frappe.get_doc('Hotel Room Reservation', d.reservation)
             doc.post_room_and_tax(getdate(self.date))
-

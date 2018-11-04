@@ -4,15 +4,6 @@
 frappe.ui.form.on('Hotel Room Reservation', {
 
 	onload: function (frm) {
-		frm.fields_dict['item'].get_query = function (doc, cdt, cdn) {
-			return {
-				filters: [
-					["Item", "item_group", "=", "Hotel Room Package"],
-					["Item", "item_code", "!=", "Extra Bed"],
-					["Item", "item_code", "not like", "%(%)%"],
-				]
-			}
-		};
 
 		frm.fields_dict['room'].get_query = function (doc, cdt, cdn) {
 			if (doc.from_date && doc.to_date && doc.item) {
@@ -24,11 +15,7 @@ frappe.ui.form.on('Hotel Room Reservation', {
 		}
 
 
-		frm.set_query("item", "items", function (doc, cdt, cdn) {
-			return {
-				filters: [["item_group", "in", ["Services", ""]]]
-			}
-		});
+
 
 	},
 

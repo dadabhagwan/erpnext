@@ -30,21 +30,33 @@ frappe.ui.form.on('Hotel Room Reservation', {
 			}
 		});
 
-		frm.fields_dict['profile_section'].collapse(false);
-		// frm.fields_dict['accounting_section'].collapse();
-		frm.fields_dict['reservation_details_section'].collapse(false);
 	},
 
 	refresh: function (frm) {
+
+		frm.fields_dict['profile_section'].collapse(false);
+		frm.fields_dict['accounting_section'].collapse();
+		frm.fields_dict['reservation_details_section'].collapse(false);
+
+
 		if (frm.is_new()) {
 			erpnext.hotels.hotel_room_reservation.set_default_values(frm);
-		} else if (frm.doc.status == "Completed") {
+		}
+
+		if (["Completed", "Invoiced", "Paid"].includes(frm.doc.status)) {
 			frm.set_read_only();
 			frm.fields_dict["items"].df.read_only = 1;
 			frm.set_intro(__("This reservation is 'Completed' and cannot be edited."));
 			frm.refresh_fields();
-		} else if (frm.doc.checkin_date) {
+		}
+
+		if (frm.doc.checkin_date) {
 			frm.set_df_property("item", "read_only", true);
+		}
+
+		if (frm.doc.room) {
+			frm.set_df_property("from_date", "read_only", true);
+			frm.set_df_property("to_date", "read_only", true);
 		}
 
 		erpnext.hotels.hotel_room_reservation.setup_custom_actions(frm);
@@ -294,14 +306,7 @@ erpnext.hotels.hotel_room_reservation = {
 		])
 	},
 
-
-	checkout: (frm) => {
-
-		if (frm.doc.to_date != frappe.datetime.nowdate()) {
-			frappe.msgprint(__("Please set Departure date to today."))
-			return;
-		}
-
+	_checkout: (frm) => {
 		frappe.run_serially([
 			() => {
 				if (cur_frm.doc.checkin_date < frappe.datetime.get_today()) {
@@ -324,32 +329,53 @@ erpnext.hotels.hotel_room_reservation = {
 				frm.set_value('room_status', 'Checked Out');
 			}
 		]);
+	},
 
+	checkout: (frm) => {
+		if (frm.doc.to_date != frappe.datetime.nowdate()) {
+			frappe.confirm(
+				__('Departure date will be set to today. Do you wish to continue?'),
+				function () {
+					frm.set_value('to_date', frappe.datetime.get_today());
+					erpnext.hotels.hotel_room_reservation._checkout(frm);
+				},
+				function () {
+					return;
+				});
+		} else {
+			erpnext.hotels.hotel_room_reservation._checkout(frm);
+		}
 	},
 
 
 	cancel_checkin: (frm) => {
-		debugger;
-
-		//remove room charge for the day
-		var index = -1;
-		for (var j = 0; j < frm.doc.items.length; j++) {
-			if (frm.doc.items[j].date == frappe.datetime.get_today() && frm.doc.item == frm.doc.items[j].item) {
-				index = j;
+		if (!frm.doc.status == "Checked In" && frm.doc.from_date == frappe.datetime.get_today()) {
+			frappe.throw(__("Cancellation allowed for same date and 'Checked In' status only."));
+			return;
+		} else {
+			//remove room charge & extra bed charge for the day
+			for (var j = 0; j < frm.doc.items.length; j++) {
+				if (["Extra Bed", frm.doc.item].includes(frm.doc.items[j].item)) {
+					frm.doc.items.splice(j, 1);
+					frm.get_field("items").grid.grid_rows[j].remove();
+				}
 			}
-		}
-		if (index > -1) {
-			frm.doc.items.splice(index, 1);
-			frm.get_field("items").grid.grid_rows[index].remove();
-		}
-		frm.set_value('room', null);
-		frm.set_value('room_status', null);
 
-		frm.refresh_field("items");
-		erpnext.hotels.hotel_room_reservation.recalculate_rates(frm);
+			frm.set_value('room', null);
+			frm.set_value('room_status', null);
+			frm.set_value('checkin_date', null);
+			frm.set_value('status', 'Booked');
+
+			frm.refresh_field("items");
+			erpnext.hotels.hotel_room_reservation.recalculate_rates(frm);
+		}
 	},
 
-
+	cancel_reservation: (frm) => {
+		frm.set_value('status', 'Cancelled');
+		// TODO:
+		// what about room status && Invoice??
+	},
 
 	add_room_charge: function (frm, date, qty) {
 		// let days = frappe.datetime.get_diff(frm.doc.to_date, frm.doc.from_date);

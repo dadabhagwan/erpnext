@@ -362,7 +362,7 @@ erpnext.hotels.hotel_room_reservation = {
 		frm.set_value('status', 'Cancelled');
 		// TODO:
 		// what about room status && Invoice??
-		if (["Booked", "Checked In"].includes(room_status))
+		if (["Booked", "Checked In"].includes(frm.doc.room_status))
 			frm.set_value('room_status', 'Cancelled');
 
 	},

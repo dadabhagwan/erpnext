@@ -29,7 +29,7 @@
 
     .invoice-title h2,
     .invoice-title h3 {
-        margin-top: 100px;
+        margin-top: 0px;
         display: inline-block;
     }
 
@@ -59,7 +59,7 @@
         margin-right: 0mm;
     }
 </style>
-
+{% set letter_head = frappe.get_doc('Letter Head', "Amba Suites Sales Invoice") %}
 {% set sales_order = "" if not doc.items else doc.items[0].sales_order %}
 {% set po_date = doc.po_date %}
 {% if not po_date and sales_order %}
@@ -67,9 +67,12 @@
 {% set po_date = po_date.strftime('%Y-%m-%d') if po_date else None %}
 {% endif %}
 {% set po_no = doc.po_no %}
+{% set hotel_items_html = doc.hotel_items_html or "No items" %}
 {% if not po_no and sales_order %} {% set po_no = frappe.db.get_value("Sales Order",sales_order,"po_no") %} {% endif %}
-
 <div class="container" style="width: auto;font-size: 13px;">
+    <div class="letter-head">
+        {{ letter_head.content }}
+    </div>
     <div class="row">
         <div class="col-xs-12 col-md-12 col-lg-12">
             <div class="invoice-title">
@@ -128,109 +131,9 @@
 
     <div class="row">
         <div class="col-xs-12 col-md-12 col-lg-12">
-            <div class="panel panel-default">
-                <!-- <div class="panel-heading">
-                        <h3 class="panel-title">
-                            <strong>Order summary</strong>
-                        </h3>
-                    </div> -->
-                <div class="panel-body">
-                    <div class="row">
-                        <div class=" col-lg-12 col-md-12 col-sm-12 description">
-                            <div class="table-responsive">
-                                <table class="table table-condensed">
-                                    <thead>
-                                        <tr>
-                                            <td class="text-center">
-                                                <strong>Room No.</strong>
-                                            </td>
-                                            <td class="text-center">
-                                                <strong>Check In Date</strong>
-                                            </td>
-                                            <td class="text-center">
-                                                <strong>Check Out Date</strong>
-                                            </td>
-                                            <td class="text-center">
-                                                <strong>No. of Days</strong>
-                                            </td>
-                                            <td class="text-center">
-                                                <strong>Extra Bed Per Day</strong>
-                                            </td>
-                                            <td class="text-center">
-                                                <strong>Extra Bed Qty</strong>
-                                            </td>
-                                            <td class="text-right">
-                                                <strong>Taxable Amount</strong>
-                                            </td>
-                                        </tr>
-                                    </thead>
-                                    <tbody>
-                                        {% for row in doc.items %}
-                                        <tr>
-                                            <td class="text-center">109</td>
-                                            <td class="text-center">
-                                                <strong>07‐10‐2018 12:00</strong>
-                                            </td>
-                                            <td class="text-center">
-                                                <strong>10‐10‐2018 10:00</strong></td>
-                                            <td class="text-center"><strong>3</strong></td>
-                                            <td class="text-center"><strong>1</strong></td>
-                                            <td class="text-center"><strong>2</strong></td>
-                                            <td class="text-right"><strong>{{ row.amount}}</strong></td>
-                                        </tr>
-                                        {% endfor %}
-                                    </tbody>
-                                </table>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-            </div>
+            {{ hotel_items_html }}
         </div>
     </div>
-
-    {% if doc.item_group == 'Services' %}
-    <div class="row">
-        <div class="col-xs-12 col-md-12 col-lg-12">
-            <div class="panel panel-default">
-                <div class="panel-body">
-                    <div class="row">
-                        <div class=" col-lg-12 col-md-12 col-sm-12 description">
-                            <div class="table-responsive">
-                                <table class="table table-condensed">
-                                    <thead>
-                                        <tr>
-                                            <td class="text-center">
-                                                <strong>Room No.</strong>
-                                            </td>
-                                            <td class="text-center">
-                                                <strong>Services</strong>
-                                            </td>
-                                            <td class="text-center">
-                                                <strong>Amount</strong>
-                                            </td>
-                                        </tr>
-                                    </thead>
-                                    <tbody>
-                                        {% for row in doc.items %}
-                                        <tr>
-
-                                            <td class="text-center"><strong>109</strong></td>
-                                            <td class="text-right"><strong>Laundry</strong></td>
-                                            <td class="text-right"><strong>150</strong></td>
-                                        </tr>
-                                        {% endfor %}
-                                    </tbody>
-                                </table>
-                            </div>
-                        </div>
-
-                    </div>
-                </div>
-            </div>
-        </div>
-    </div>
-    {% endif %}
 
     <div style="padding-right:10px;padding-bottom:25px;">
         <!-- Totals-->
@@ -264,9 +167,9 @@
             </div>
         </div>
         <!-- End Totals-->
-   </div>
-   
-   <div class="row">
+    </div>
+
+    <div class="row">
         <div class="col-xs-8">
             <address>
                 <strong>Amount in words</strong>
@@ -289,18 +192,9 @@
 
         </div>
     </div>
-
-
-    <br><br><br>
-
-    <div id="foo-ter-html" class="visibl-e-pdf">
-        <div class="letter-head-footer text-center">
-            <strong>Service provided by</strong> Amba Township Private Limited
-            <br> Basement, Tower A, Vardan Tower, Opp Shanti Apartment, Naranpura, Ahmedabad 380 013 GUJARAT
-            <br>
-
-            <br> {% set registration_details = frappe.db.get_value("Company", doc.company, "registration_details") %}
-            {{ registration_details }}
+    <div id="footer-html" class="visible-pdf">
+        <div class="letter-head-footer">
+            {{ letter_head.footer }}
         </div>
     </div>
 </div>

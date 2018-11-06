@@ -336,6 +336,10 @@ def make_sales_invoice(source_name, target_doc=None, ignore_permissions=False):
     target.flags.ignore_permissions = 1
     target.set_missing_values()
     target.calculate_taxes_and_totals()
+    from frappe.contacts.doctype.address.address import get_address_display, get_default_address
+    customer_address = get_default_address("Customer", reservation.customer)
+    target.address_display = get_address_display(frappe.get_doc(
+        "Address", customer_address).as_dict())
 
     target.insert()
 

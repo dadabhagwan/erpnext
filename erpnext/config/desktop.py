@@ -584,7 +584,7 @@ def get_data():
 		{
 			"module_name": "Billing",
 			"_doctype": "Hotel Room Reservation",
-			"color": "#85bb65",
+			"color": "green",
 			"icon": "fa fa-inr",
 			"type": "link",
 			"link": "query-report/Billing"
@@ -599,8 +599,8 @@ def get_data():
 		},
 		{
 			"module_name": "Frontdesk",
-			"color": "#515A5A",
-			"icon": "glyphicon glyphicon-log-in",
+			"color": "#3498db",
+			"icon": "octicon octicon-desktop-download",
 			"type": "page",
 			"link": "frontdesk",
 			"label": _("Front Desk")
@@ -608,10 +608,51 @@ def get_data():
 		{
 			"module_name": "Hotel Analytics",
 			"_doctype": "Hotel Room Reservation",
-			"color": "#800080",
+			"color": "green",
 			"icon": "fa fa-line-chart",
 			"type": "link",
 			"link": "query-report/Hotel Analytics",
 			"role": "Hotel Manager"
+		},
+		{
+			"module_name": "Hotel MIS",
+			"_doctype": "Hotel Room Reservation",
+			"color": "green",
+			"icon": "fa fa-bar-chart",
+			"type": "link",
+			"link": "query-report/Hotel MIS",
+			"role": "Hotel Manager"
+		},
+		{
+			"module_name": "Guest",
+			"_doctype": "Guest",
+			"color": "#e74c3c",
+			"icon": "fa fa-user",
+			"type": "link",
+			"link": "List/Guest"
+		},
+		{
+			"module_name": "Hotel Room Reservation",
+			"_doctype": "Hotel Room Reservation",
+			"color": "#EA6A47",
+			"icon": "fa fa-bookmark-o",
+			"type": "link",
+			"link": "List/Hotel Room Reservation",
+			"label": _("Room Reservation")
+		},
+		{
+			"module_name": "Booking Reference",
+			"_doctype": "Booking Reference",
+			"color": "#1C4E80",
+			"icon": "fa fa-book",
+			"type": "link",
+			"link": "List/Booking Reference"
+		},{
+			"module_name": "Night Audit",
+			"_doctype": "Night Audit",
+			"color": "#2c3e50",
+			"icon": "octicon octicon-link-external",
+			"type": "link",
+			"link": "List/Night Audit"
 		}
 	]

@@ -34,15 +34,18 @@
     }
 
     .table {
-        margin-bottom: 5px;
+        margin-bottom: 0px;
+        margin-top: 0px;
     }
 
     .table>tbody>tr>.no-line {
-        border-top: none;
+        border-top: 0px;
+        border-top: 0px;
     }
 
     .table>thead>tr>.no-line {
-        border-bottom: none;
+        border-bottom: 0px;
+        border-top: 0px;
     }
 
     .table>tbody>tr>.thick-line {
@@ -51,12 +54,17 @@
 
     .panel-body {
         padding-bottom: 0px;
+        padding-top: 0px;
     }
 
     .print-format {
         margin-top: 0mm;
         margin-left: 0mm;
         margin-right: 0mm;
+    }
+    .hr {
+        margin-block-start: 0em !important;
+        margin-block-end: 0em !important;
     }
 </style>
 {% set letter_head = frappe.get_doc('Letter Head', {"is_default" : 1}) %}
@@ -68,8 +76,13 @@
 {% endif %}
 {% set po_no = doc.po_no %}
 {% set hotel_items_html = doc.hotel_items_html or "No items" %}
+
+{% set reservation = frappe.db.get_value("Hotel Room Reservation", {"sales_invoice" : doc.name}, ["name", "guest"],
+as_dict=1) %}
+{% set guest = frappe.db.get_value("Guest", reservation.guest , ["mobile_no", "email", "full_name"], as_dict=1) %}
+
 {% if not po_no and sales_order %} {% set po_no = frappe.db.get_value("Sales Order",sales_order,"po_no") %} {% endif %}
-<div class="container" style="width: auto;font-size: 13px;">
+<div class="container" style="width: auto;font-size: 11px;">
     <div class="letter-head">
         {{ letter_head.content }}
     </div>
@@ -79,53 +92,51 @@
                 <h2>TAX INVOICE </h2>
                 <span style="float:right;margin-top:110px;">{% block copy_name %}{% endblock %}</span>
             </div>
-            <div class="row">
-                <div class="col-xs-8">
-                    <strong>Billed To:</strong> {{ doc.customer }}
-                </div>
-                <div class="col-xs-4">
-                    <strong>Place of Supply:</strong> Gujarat-24
-                </div>
-            </div>
 
             <div class="row">
-                <div class="col-xs-8">
-                    <strong>Guest Name:</strong> {{ doc.customer }}
+
+                <div class="col-xs-6 col-md-6 col-lg-6">
+                    <div>
+                        <strong>Billed To:</strong> {{ doc.customer }}
+
+                    </div>
+                    <div>
+                        <strong>Place of Supply:</strong> Gujarat-24
+                    </div>
+                    <div> <strong>Guest Name:</strong> {{ guest.full_name }}
+                    </div>
+                    <div>
+                        <address>
+                            <strong>Address:</strong>
+                            <br> {{ doc.address_display }}
+                        </address>
+
+                    </div>
+
                 </div>
-                <div class="col-xs-4">
-                    <strong>INV No.:</strong> {{ doc.name }}
+                <div class="col-xs-5 col-md-5 col-lg-5">
+                    <div> <strong>INV No.:</strong> {{ doc.name }}
+                    </div>
+                    <div> <strong>INV Date:</strong> {{ doc.posting_date }}
+                    </div>
+                    <div>
+                        {% if doc.customer_gstin %}
+                        <strong>Customer GSTIN:</strong> {{ doc.customer_gstin }}
+                        {% endif %}
+                    </div>
+                    <div><strong>Phone:</strong> {{ guest.mobile_no }}
+                    </div>
+                    <div> {% if guest.email %}
+                        <strong>Email:</strong> {{ guest.email }}
+                        {% endif %}
+                    </div>
                 </div>
+
             </div>
 
-            <div class="row">
-                <div class="col-xs-8">
-                    <address>
-                        <strong>Address:</strong>
-                        <br> {{ doc.address_display }}
-                        <br>
-                    </address>
-                </div>
-                <div class="col-xs-4">
-                    <strong>INV Date:</strong> {{ doc.posting_date }}
-                </div>
-                {% if doc.customer_gstin %}
-                <div class="col-xs-4">
-                    <strong>Customer GSTIN:</strong> {{ doc.customer_gstin }}
-                </div>
-                {% endif %}
 
-                {% if doc.contact_mobile %}
-                <div class="col-xs-4">
-                    <strong>Phone:</strong> {{ doc.contact_mobile }}
-                </div>
-                {% endif %}
 
-                {% if doc.contact_email %}
-                <div class="col-xs-4">
-                    <strong>Email:</strong> {{ doc.contact_email }}
-                </div>
-                {% endif %}
-            </div>
+
         </div>
     </div>
 
@@ -139,7 +150,7 @@
         <!-- Totals-->
         {% if doc.taxes %}
         <div class="row">
-            <div class="tax-net-total-row">
+            <div class="tax-net-total-row" style="margin-top: 0px; margin-bottom: 0px;">
                 <div class="col-xs-9 pull-left text-right">{{ _("Taxable Total") }}</div>
                 <div class="col-xs-3 text-right">
                     {{ doc.get_formatted("base_total") }}</div>
@@ -167,32 +178,35 @@
             </div>
         </div>
         <!-- End Totals-->
-    </div>
-
-    <div class="row">
-        <div class="col-xs-8">
-            <address>
-                <strong>Amount in words</strong>
-                <br> {{ doc.in_words }}
-
-            </address>
-
-        </div>
-    </div>
-    <div class="row">
-        <div class="col-xs-8">
-            <strong>Manager/Receptionist</strong>
-            <br><br><br>____________________
-        </div>
-        <div class="col-xs-4">
-            <div class="text-center panel-heading">
-                <strong>Guest Signature</strong>
-                <br><br><br>____________________
+        <div class="row">
+            <div class="col-xs-8">
+                <address>
+                    <strong>Amount in words: </strong><strong class="font-size:12px;">{{ doc.in_words }}</strong>
+                </address>
             </div>
+        </div>
+        <div class="row">
+            <div class="col-xs-12 col-md-12 col-lg-12">
+                {{ doc.other_charges_calculation}}
+            </div>
+        </div>
+        <br>
+        <div class="row">
+            <div class="col-xs-8">
+                <strong>Manager/Receptionist</strong>
+                <br><br>____________________
+            </div>
+            <div class="col-xs-4">
+                <div class="text-center panel-heading">
+                    <strong>Guest Signature</strong>
+                    <br><br>____________________
+                </div>
 
+            </div>
         </div>
     </div>
-    <div id="footer-html" class="visible-pdf">
+
+    <div id="footer-html" class="visibl-e-pdf">
         <div class="letter-head-footer">
             {{ letter_head.footer }}
         </div>

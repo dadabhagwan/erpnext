@@ -59,7 +59,7 @@
         margin-right: 0mm;
     }
 </style>
-{% set letter_head = frappe.get_doc('Letter Head', "Amba Suites Sales Invoice") %}
+{% set letter_head = frappe.get_doc('Letter Head', {"is_default" : 1}) %}
 {% set sales_order = "" if not doc.items else doc.items[0].sales_order %}
 {% set po_date = doc.po_date %}
 {% if not po_date and sales_order %}

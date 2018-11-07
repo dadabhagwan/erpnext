@@ -17,7 +17,7 @@ class NightAudit(Document):
         self.items = []
         filters = {"room_status": "Checked In",
                    "company": self.company, "from_date": ["<=", self.date], "to_date": [">=", self.date]}
-        fields = ['room', 'name', 'item', 'extra_bed']
+        fields = ['room', 'name','guest_name', 'mobile_no', 'item', 'extra_bed']
         doclist = frappe.db.get_list(
             "Hotel Room Reservation", filters=filters, fields=fields)
         for d in doclist:
@@ -25,6 +25,8 @@ class NightAudit(Document):
                 self.append("items", {
                     "room": d["room"],
                     "reservation": d["name"],
+                    "guest_name": d["guest_name"],
+                    "mobile_no": d["mobile_no"],
                     "item": item,
                     "qty": 1,
                 })

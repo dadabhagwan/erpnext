@@ -3,6 +3,8 @@
 
 frappe.ui.form.on('Night Audit', {
 	refresh: function (frm) {
-		frm.set_value('date', frappe.datetime.get_today());
+		if (frm.is_new()) {
+			frm.set_value('date', frappe.datetime.get_today());
+		}
 	}
 });

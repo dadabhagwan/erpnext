@@ -1,5 +1,6 @@
 {
  "allow_copy": 0, 
+ "allow_events_in_timeline": 0, 
  "allow_guest_to_view": 0, 
  "allow_import": 0, 
  "allow_rename": 0, 
@@ -154,7 +155,7 @@
  "issingle": 0, 
  "istable": 0, 
  "max_attachments": 0, 
- "modified": "2018-10-01 20:22:50.540632", 
+ "modified": "2018-11-11 09:59:53.968208", 
  "modified_by": "Administrator", 
  "module": "Hotels", 
  "name": "Night Audit", 
@@ -164,7 +165,7 @@
   {
    "amend": 0, 
    "cancel": 0, 
-   "create": 1, 
+   "create": 0, 
    "delete": 1, 
    "email": 1, 
    "export": 1, 
@@ -183,7 +184,7 @@
   {
    "amend": 0, 
    "cancel": 0, 
-   "create": 1, 
+   "create": 0, 
    "delete": 0, 
    "email": 1, 
    "export": 1, 

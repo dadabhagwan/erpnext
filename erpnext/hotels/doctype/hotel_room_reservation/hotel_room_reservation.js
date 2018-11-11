@@ -30,7 +30,7 @@ frappe.ui.form.on('Hotel Room Reservation', {
 			erpnext.hotels.hotel_room_reservation.set_default_values(frm);
 		}
 
-		if (["Completed", "Invoiced", "Paid"].includes(frm.doc.status)) {
+		if (["Invoiced", "Paid"].includes(frm.doc.status)) {
 			frm.set_read_only();
 			frm.fields_dict["items"].df.read_only = 1;
 			frm.set_intro(__("This reservation is 'Completed' and cannot be edited."));
@@ -41,10 +41,10 @@ frappe.ui.form.on('Hotel Room Reservation', {
 			frm.set_df_property("item", "read_only", true);
 		}
 
-		if (frm.doc.room) {
-			frm.set_df_property("from_date", "read_only", true);
-			frm.set_df_property("to_date", "read_only", true);
-		}
+		// if (frm.doc.room) {
+		// 	frm.set_df_property("from_date", "read_only", true);
+		// 	// frm.set_df_property("to_date", "read_only", true);
+		// }
 
 		erpnext.hotels.hotel_room_reservation.setup_custom_actions(frm);
 

@@ -109,8 +109,11 @@ class HotelRoomReservation(Document):
             frappe.throw("Date is out of booking period.")
 
         line_items = [(self.item, 1)]
+
         if self.extra_bed:
-            line_items.append(("Extra Bed", self.extra_bed))
+            hotel_settings = frappe.get_single("Hotel Settings")
+            line_items.append(
+                (hotel_settings.extra_bed_service or "Extra Bed", self.extra_bed))
 
         for d in line_items:
             day_rate = self.get_day_rate(d[0], date)

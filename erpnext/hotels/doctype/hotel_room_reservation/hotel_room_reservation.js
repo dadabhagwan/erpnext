@@ -374,15 +374,21 @@ erpnext.hotels.hotel_room_reservation = {
 			"item": frm.doc.item,
 			"qty": qty
 		});
+
 		if (frm.doc.extra_bed) {
-			frm.add_child("items", {
-				"date": date,
-				"item": "Extra Bed",
-				"qty": frm.doc.extra_bed
+			frappe.db.get_value('Hotel Settings', { name: 'Hotel Settings' }, 'extra_bed_service', (r) => {
+				frm.add_child("items", {
+					"date": date,
+					"item": r && r.extra_bed_service ? r.extra_bed_service : "Extra Bed",
+					"qty": frm.doc.extra_bed
+				});
+				frm.refresh_field("items");
+				erpnext.hotels.hotel_room_reservation.recalculate_rates(frm);
 			});
-		};
-		frm.refresh_field("items");
-		erpnext.hotels.hotel_room_reservation.recalculate_rates(frm);
+		} else {
+			frm.refresh_field("items");
+			erpnext.hotels.hotel_room_reservation.recalculate_rates(frm);
+		}
 	},
 
 

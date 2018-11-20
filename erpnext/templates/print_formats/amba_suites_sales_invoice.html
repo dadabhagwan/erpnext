@@ -77,7 +77,7 @@
 {% set po_no = doc.po_no %}
 {% set hotel_items_html = doc.hotel_items_html or "No items" %}
 
-{% set reservation = frappe.db.get_value("Hotel Room Reservation", {"sales_invoice" : doc.name}, ["name", "guest"],
+{% set reservation = frappe.db.get_value("Hotel Room Reservation", doc.hotel_room_reservation , ["name", "guest"],
 as_dict=1) %}
 {% set guest = frappe.db.get_value("Guest", reservation.guest , ["mobile_no", "email", "full_name"], as_dict=1) %}
 

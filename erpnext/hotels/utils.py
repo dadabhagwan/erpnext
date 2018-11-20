@@ -8,11 +8,6 @@ from frappe import _
 from frappe.utils import date_diff, add_days, cint, getdate
 from frappe.utils.data import getdate, formatdate
 
-
-def test():
-    return get_reservation_chart("2018-08-28", "2018-08-31")
-
-
 def get_available_rooms(doctype, txt, searchfield, start, page_len, filters):
     if not filters:
         filters = {}
@@ -40,7 +35,7 @@ and not EXISTS
  and not (r.from_date > '{to_date}' or r.to_date <= '{from_date}')
 )
 {where_conditions}
-""".format(item=filters.get("item"), from_date=filters.get("from_date"), to_date=filters.get("to_date"), where_conditions=where_conditions),debug=0)
+""".format(item=filters.get("item"), from_date=filters.get("from_date"), to_date=filters.get("to_date"), where_conditions=where_conditions), debug=0)
 
 
 @frappe.whitelist()
@@ -82,7 +77,7 @@ def get_calendar(from_date, to_date, as_dict=0):
              for d in range((getdate(to_date)-getdate(from_date)).days+1)]
 
     select_agg = " , ".join(
-        ["cast(max(`{0}`) as char) `{0}`".format(getdate(d).strftime('%b %d')) for d in dates])
+        ["trim('|' from trim(leading '~' from cast(max(`{0}`) as char))) `{0}`".format(getdate(d).strftime('%b %d')) for d in dates])
 
     select_columns = " , ".join(["case when a.db_date = '{0}' then a.data else '' end as `{1}`".format(
         d, getdate(d).strftime('%b %d')) for d in dates])
@@ -96,14 +91,35 @@ def get_calendar(from_date, to_date, as_dict=0):
             select a.hotel_room_type, a.hotel_room_name, 
             {select_columns}
             from
-            (select hr.hotel_room_type, hr.name hotel_room_name, cal.db_date,
-            concat_ws('|',r.guest_name,right(r.name,4),case room_status when 'Checked In' then 'O' when 'Booked' then 'B' else '' end,0) data
-            from `tabHotel Room` hr
-            left outer join `tabHotel Room Reservation` r on r.room = hr.name
-            left outer join `tabDate` cal on cal.db_date>= r.from_date and cal.db_date <= r.to_date
+            (
+	             select hr.hotel_room_type, hr.name hotel_room_name, cal.db_date,
+	            case 
+                when hk.room_status is not null then '~~~~~~' + upper(hk.room_status)
+	            else
+	            concat_ws('|',
+	            case 
+	            	when r.room_status = 'Checked In' then '~~~~'
+	            	when r.room_status = 'Booked' then '~~~'
+	            	when r.room_status = 'Checked Out' then '~~'
+	            	else '~'
+	            end,
+	            r.guest_name,
+	            right(r.name,4),
+	            case 
+	            	when r.room_status = 'Checked In' then 'O'
+	            	when r.room_status = 'Booked' then 'B'
+	            	when r.room_status = 'Checked Out' then 'K'
+	            	else '' 
+	            end,
+	            0) end data
+	            from `tabHotel Room` hr
+	            left outer join `tabHotel Room Reservation` r on r.room = hr.name
+	            left outer join `tabDate` cal on cal.db_date>= r.from_date and cal.db_date <= r.to_date
+	            left outer join `tabHousekeeping` hk on hk.room = hr.name and hk.room_status <> 'Clean'
             ) a
         ) t
         group by hotel_room_type, hotel_room_name
         order by hotel_room_type, hotel_room_name
-    """.format(from_date=from_date, to_date=to_date, select_columns=select_columns, select_agg=select_agg), as_dict=as_dict, debug=0)
+    """.format(from_date=from_date, to_date=to_date, select_columns=select_columns, select_agg=select_agg), as_dict=as_dict, debug=1)
     return columns, data
+

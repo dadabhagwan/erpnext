@@ -598,14 +598,6 @@ def get_data():
 			"link": "query-report/Occupancy"
 		},
 		{
-			"module_name": "Frontdesk",
-			"color": "#3498db",
-			"icon": "octicon octicon-desktop-download",
-			"type": "page",
-			"link": "frontdesk",
-			"label": _("Front Desk")
-		},
-		{
 			"module_name": "Hotel Analytics",
 			"_doctype": "Hotel Room Reservation",
 			"color": "green",

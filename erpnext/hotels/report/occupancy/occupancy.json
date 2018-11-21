@@ -6,19 +6,28 @@
  "doctype": "Report", 
  "idx": 0, 
  "is_standard": "Yes", 
- "modified": "2018-11-05 02:41:42.518425", 
+ "modified": "2018-11-21 13:32:59.953737", 
  "modified_by": "Administrator", 
  "module": "Hotels", 
  "name": "Occupancy", 
  "owner": "Administrator", 
  "prepared_report": 0, 
- "query": "select status \"Status::80\", name \"Reservation:Link/Hotel Room Reservation:100\", item \"Room Type::125\", guest_name \"Guest::190\", from_date \"From:Date:90\", to_date \"To:Date:90\", net_total \"Net:Float:90\",  room \"Room::60\", room_status \"Rm Status::90\"\nfrom `tabHotel Room Reservation`\nwhere \n1 = case \nwhen %(report)s = 'In House' \nand room_status='Checked In' then 1\nwhen %(report)s = 'Arrival' \nand status in ('Booked') and from_date = %(today)s then 1 \nwhen %(report)s = 'Departure' \nand status = 'In House' and room_status = 'Checked In' and to_date = %(today)s then 1\nwhen %(report)s = 'Reserved' \nand status = 'Booked' and from_date >= %(from_date)s and to_date <= %(to_date)s then 1\nwhen %(report)s = 'Completed' \nand status not in ('Booked','In House') and from_date >= %(from_date)s and to_date <= %(to_date)s then 1\nelse 0 end \norder by from_date, to_date, guest_name", 
+ "query": "select status \"Status::80\", name \"Reservation:Link/Hotel Room Reservation:100\", guest_name \"Guest::190\", room \"Room::60\", room_status \"Rm Status::90\", from_date \"From:Date:90\", to_date \"To:Date:90\", item \"Room Type::125\", net_total \"Net:Float:90\"  \nfrom `tabHotel Room Reservation`\nwhere \n1 = case \nwhen %(report)s = 'In House' \nand room_status='Checked In' then 1\nwhen %(report)s = 'Arrival' \nand status in ('Booked') and from_date = %(today)s then 1 \nwhen %(report)s = 'Departure' \nand status = 'In House' and room_status = 'Checked In' and to_date = %(today)s then 1\nwhen %(report)s = 'Reserved' \nand status = 'Booked' and from_date >= %(from_date)s and to_date <= %(to_date)s then 1\nwhen %(report)s = 'Completed' \nand status not in ('Booked','In House') and from_date >= %(from_date)s and to_date <= %(to_date)s then 1\nelse 0 end \norder by from_date, to_date, guest_name", 
  "ref_doctype": "Hotel Room Reservation", 
  "report_name": "Occupancy", 
  "report_type": "Query Report", 
  "roles": [
   {
    "role": "System Manager"
+  }, 
+  {
+   "role": "Hotel Reservation User"
+  }, 
+  {
+   "role": "Hotel Manager"
+  }, 
+  {
+   "role": "Report"
   }
  ]
 }

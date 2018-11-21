@@ -15,37 +15,36 @@ class NightAudit(Document):
 
     def validate_pending_checkout(self):
         # check for invalid reservations - checked in room status & to_date <= today
-        if frappe.db.sql("""
-            select 1 
+        checked_in = frappe.db.sql("""
+            select res.room
             from `tabHotel Room Reservation` res
             where res.room_status = 'Checked In' and to_date <= %s
             limit 1
-            """, (self.date)):
+            """, (self.date))
+        if checked_in:
+            checked_in = ", ".join([d[0] for d in checked_in])
             frappe.throw(
-                """Please checkout or extend pending checkouts. <br>
-                 <a href='desk#query-report/Occupancy'><strong>Occupancy Report</strong></a>""")
+                """Please checkout or extend pending checkouts. Rooms : {} <br>
+                 <a href='desk#query-report/Occupancy'><strong>Occupancy Report</strong></a>""".format(checked_in))
 
     def get_audit_items(self):
         self.validate_pending_checkout()
         items = frappe.db.sql("""
-    select a.* from 
-    (select %s date, res.room, res.name, res.guest, g.full_name guest_name, g.mobile_no, res.item, 1 qty
+select a.*, g.full_name guest_name, g.mobile_no
+from 
+(   select res.room, res.name, res.guest, res.item, 1 qty
     from `tabHotel Room Reservation` res
-    inner join `tabGuest` g on g.name = res.guest
     where res.room_status = 'Checked In'
     union all
-    select  %s date, res.room, res.name, res.guest, g.full_name guest_name, g.mobile_no, 'Extra Bed' item, extra_bed qty
+    select res.room, res.name, res.guest, s.value, res.extra_bed qty
     from `tabHotel Room Reservation` res
-    inner join `tabGuest` g on g.name = res.guest
-    where res.room_status = 'Checked In' and res.extra_bed > 0) a
-    left outer join
-    (select item.date, res.room, res.name, res.guest, g.full_name, g.mobile_no, item.item, item.qty
-    from `tabHotel Room Reservation` res
-    inner join `tabHotel Room Reservation Item` item on item.parent = res.name and item.date = %s
-    inner join `tabGuest` g on g.name = res.guest
-    where res.room_status = 'Checked In') b on a.date = b.date and a.item = b.item
-    where b.date is null        
-        """, (self.date, self.date, self.date), as_dict=1)
+    inner join tabSingles s on s.doctype='Hotel Settings' and s.field='extra_bed_service' 	
+    where res.room_status = 'Checked In' and res.extra_bed > 0
+) a
+inner join `tabGuest` g on g.name = a.guest
+where not exists 
+(select 1 from `tabHotel Room Reservation Item` x where x.parent=a.name and x.date= %s and x.item = a.item)
+        """, (self.date), as_dict=1)
         for d in items:
             if not list(filter(lambda x: x.room ==
                                d["room"] and x.reservation == d["name"] and x.item == d["item"], self.items)):

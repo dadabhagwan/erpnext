@@ -9,7 +9,7 @@
  "idx": 0, 
  "is_standard": "Yes", 
  "json": "{\"add_total_row\": 1}", 
- "modified": "2018-10-28 22:12:45.358335", 
+ "modified": "2018-11-21 13:41:26.221719", 
  "modified_by": "Administrator", 
  "module": "Hotels", 
  "name": "Hotel Analytics", 
@@ -22,6 +22,9 @@
  "roles": [
   {
    "role": "System Manager"
+  }, 
+  {
+   "role": "Hotel Manager"
   }
  ]
 }

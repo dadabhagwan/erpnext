@@ -297,6 +297,8 @@ def make_sales_invoice(source_name, target_doc=None, ignore_permissions=False):
         "Address", customer_address).as_dict())
 
     target.insert()
+    reservation.update({"sales_invoice": target.name, "status": "Invoiced"})
+    reservation.save()
     return target
 
 

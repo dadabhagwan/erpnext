@@ -655,7 +655,7 @@
    "label": "Booking Status", 
    "length": 0, 
    "no_copy": 0, 
-   "options": "Booked\nIn House\nCompleted\nCancelled", 
+   "options": "Booked\nIn House\nCompleted\nCancelled\nInvoiced", 
    "permlevel": 0, 
    "precision": "", 
    "print_hide": 0, 

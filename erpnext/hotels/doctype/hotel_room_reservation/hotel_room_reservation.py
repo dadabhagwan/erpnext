@@ -173,11 +173,6 @@ class HotelRoomReservation(Document):
             if not d.date:
                 d.date = nowdate()
 
-    def set_item_date(self):
-        for d in self.items:
-            if not d.date:
-                d.date = nowdate()
-
 
 @frappe.whitelist()
 def get_room_rate(hotel_room_reservation):
@@ -199,13 +194,6 @@ def get_group(reservation):
         ) i on i.parent = r.name
         where r.group_id = '%s'
     """ % (reservation,), as_dict=1)
-
-
-@frappe.whitelist()
-def validate_folio(reservation):
-    # check for unsettled open folio e.g in case of group booking
-    # reservation = frappe.get_doc('Hotel Room Reservation', reservation)
-    return {"is_folio_open": 0}
 
 
 @frappe.whitelist()

@@ -12,7 +12,7 @@ app_license = "GNU General Public License (v3)"
 source_link = "https://github.com/frappe/erpnext"
 
 develop_version = '12.x.x-develop'
-staging_version = '11.0.3-beta.25'
+staging_version = '11.0.3-beta.29'
 
 error_report_email = "support@erpnext.com"
 
@@ -208,7 +208,7 @@ doc_events = {
 		"on_trash": "erpnext.regional.check_deletion_permission"
 	},
 	"Payment Entry": {
-		"on_submit": ["erpnext.regional.france.utils.create_transaction_log", "erpnext.accounts.doctype.payment_request.payment_request.make_status_as_paid"],
+		"on_submit": ["erpnext.regional.france.utils.create_transaction_log", "erpnext.accounts.doctype.payment_request.payment_request.make_status_as_paid","erpnext.hotels.doctype.hotel_room_reservation.hotel_room_reservation.make_status_as_paid"],
 		"on_trash": "erpnext.regional.check_deletion_permission"
 	},
 	'Address': {

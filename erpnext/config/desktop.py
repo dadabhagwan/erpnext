@@ -393,7 +393,7 @@ def get_data():
 		},
 		{
 			"module_name": "Hotels",
-			"color": "#EA81E8",
+			"color": "#5C4743",
 			"icon": "fa fa-bed",
 			"type": "module",
 			"label": _("Hotels"),
@@ -573,5 +573,71 @@ def get_data():
 			"type": "module",
 			"label": _("Non Profit"),
 			"hidden": 1
+		},
+		{
+			"module_name": "Hotel Extension",
+			"color": "#5C4743",
+			"icon": "fa fa-home",
+			"type": "module",
+			"label": _("Hotel Extension")
+		},
+		{
+			"module_name": "Billing",
+			"_doctype": "Hotel Room Reservation",
+			"color": "green",
+			"icon": "fa fa-inr",
+			"type": "link",
+			"link": "query-report/Billing"
+		},
+		{
+			"module_name": "Occupancy",
+			"_doctype": "Hotel Room Reservation",
+			"color": "#E59866",
+			"icon": "glyphicon glyphicon-calendar",
+			"type": "link",
+			"link": "query-report/Occupancy"
+		},
+		{
+			"module_name": "Hotel Analytics",
+			"_doctype": "Hotel Room Reservation",
+			"color": "green",
+			"icon": "fa fa-line-chart",
+			"type": "link",
+			"link": "query-report/Hotel Analytics",
+			"role": "Hotel Manager"
+		},
+		{
+			"module_name": "Hotel MIS",
+			"_doctype": "Hotel Room Reservation",
+			"color": "green",
+			"icon": "fa fa-bar-chart",
+			"type": "link",
+			"link": "query-report/Hotel MIS",
+			"role": "Hotel Manager"
+		},
+		{
+			"module_name": "Guest",
+			"_doctype": "Guest",
+			"color": "#e74c3c",
+			"icon": "fa fa-user",
+			"type": "link",
+			"link": "List/Guest"
+		},
+		{
+			"module_name": "Hotel Room Reservation",
+			"_doctype": "Hotel Room Reservation",
+			"color": "#EA6A47",
+			"icon": "fa fa-bookmark-o",
+			"type": "link",
+			"link": "List/Hotel Room Reservation",
+			"label": _("Room Reservation")
+		},
+		{
+			"module_name": "Night Audit",
+			"_doctype": "Night Audit",
+			"color": "#2c3e50",
+			"icon": "octicon octicon-link-external",
+			"type": "link",
+			"link": "List/Night Audit"
 		}
 	]

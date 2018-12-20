@@ -16,6 +16,7 @@ frappe.ui.form.on(cur_frm.doctype, {
 				frm.doc.transfer_details = [];
 			}
 		}
+		console.log('Onload');
 	},
 	employee: function(frm) {
 		frm.add_fetch("employee", "company", "company");
@@ -27,7 +28,13 @@ frappe.ui.form.on(cur_frm.doctype, {
 		}else if (frm.doctype == "Employee Transfer") {
 			table = "transfer_details";
 		}
-		if(!table){return;}
+		if(!table ||  !cur_frm.fields_dict[table].grid.wrapper){
+			setTimeout(function() {
+        	                cur_frm.trigger('refresh');
+                	        console.log('Refresh Triggered');
+	                }, 3000);
+			return;
+		}
 		cur_frm.fields_dict[table].grid.wrapper.find('.grid-add-row').hide();
 		cur_frm.fields_dict[table].grid.add_custom_button(__('Add Row'), () => {
 			if(!frm.doc.employee){
